@@ -1,0 +1,164 @@
+library(shiny)
+library(tidyverse)
+library(odin2)
+library(dust2)
+library(bslib)
+library(DT)
+
+# Countries of interest
+countries <- data.frame(
+  name = c("Syria", "Palestine", "Yemen", "Nigeria", "Ethiopia", "Sudan",
+           "Myanmar", "Papa New Guinea", "Afghanistan", "Venezuela", "Haiti", "Guatemala"),
+  iso = c("SYR", "PSE", "YEM", "NGA", "ETH", "SDN", "MMR", "PNG", "AFG", "VEN", "HTI", "GTM")
+)
+
+# Diseases of interest
+diseases_of_interest <- data.frame(
+  disease = c("Diphtheria", "Measles", "Pertussis"),
+  default_R0 = c(15, 12, 3)
+)
+
+# UI ----------------------------------------------------------------------
+
+ui <- fluidPage(
+  theme = bs_theme(bootswatch = "litera", font_scale = 0.9),
+  
+  # Custom styling for sidebar + DataTable scroll
+  tags$head(
+    tags$style(HTML("
+      .sidebar-custom {
+        font-size: 0.85rem;
+      }
+      .sidebar-custom .form-control,
+      .sidebar-custom .selectize-input {
+        font-size: 0.85rem;
+      }
+      .sidebar-custom h4 {
+        font-size: 1rem;
+        margin-top: 1rem;
+      }
+      .dataTables_wrapper {
+        width: 100% !important;
+      }
+      .dataTables_scrollBody {
+        max-height: 200px !important;
+        overflow-y: auto !important;
+      }
+    "))
+  ),
+  
+  titlePanel("Infectious Disease Simulation"),
+  
+  navset_card_underline(
+    nav_panel("Model Setup",
+              layout_columns(
+                col_widths = c(4, 8),
+                
+                # Sidebar
+                div(
+                  class = "sidebar-custom p-3 bg-light border rounded",
+                  
+                  h4("Demographic characteristics"),
+                  selectInput("country", "Country", countries$name),
+                  numericInput("popsize", "Population size", 1000, min = 1, max = 2e9),
+                  
+                  h4("Disease parameters"),
+                  selectInput("disease", "Disease of interest", diseases_of_interest$disease, selected = "Diphtheria"),
+                  uiOutput("r0_input"),
+                  
+                  h4("Years of simulation"),
+                  sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
+                  
+                  h4("Routine vaccination coverage by year"),
+                  div(style = "height: 220px;",
+                      DTOutput("input_coverage_table")
+                  )
+          
+                ),
+                
+                # Main content
+                div(
+                  class = "p-3",
+                  h4("Main panel output will go here.")
+                )
+              )
+    ),
+    
+    nav_panel("Model outputs",
+              h4("Results tab content here.")
+    ),
+    
+    nav_panel("Methods",
+              h4("Methods tab content here.")
+    )
+  )
+)
+
+# Server ------------------------------------------------------------------
+
+server <- function(input, output, session) {
+  last_n <- reactiveVal(3)
+  
+  current_data <- reactiveVal(
+    data.frame(Year = 0:2, `Vaccination coverage` = rep(0, 3))
+  )
+  
+  observeEvent(input$years, {
+    n_new <- input$years
+    n_old <- last_n()
+    df_old <- current_data()
+    
+    if (n_new > n_old) {
+      added_rows <- data.frame(
+        Year = n_old:(n_new - 1),
+        `Vaccination coverage` = rep(0, n_new - n_old)
+      )
+      df_new <- rbind(df_old, added_rows)
+    } else {
+      df_new <- head(df_old, n_new)
+    }
+    
+    current_data(df_new)
+    last_n(n_new)
+  })
+  
+  output$input_coverage_table <- renderDT({
+    datatable(
+      current_data(),
+      editable = list(target = "cell", disable = list(columns = c(0))),
+      rownames = FALSE,
+      options = list(
+        dom = 't',
+        ordering = FALSE,
+        scrollY = 200,
+        paging = FALSE,
+        scroller = TRUE
+      )
+    )
+  }, server = FALSE)
+  
+  observeEvent(input$input_coverage_table_cell_edit, {
+    info <- input$input_coverage_table_cell_edit
+    i <- info$row
+    j <- info$col + 1
+    v <- suppressWarnings(as.numeric(info$value))
+    
+    if (!is.na(v) && v >= 0 && v <= 100 && j == 2) {
+      df <- current_data()
+      df[i, j] <- v
+      current_data(df)
+    }
+  })
+  
+  output$r0_input <- renderUI({
+    selected_disease <- input$disease
+    default_r0 <- diseases_of_interest$default_R0[
+      diseases_of_interest$disease == selected_disease
+    ]
+    
+    numericInput("r0", "Basic reproductive number (R0)", value = default_r0)
+  })
+}
+
+# Launch App
+shinyApp(ui, server)
