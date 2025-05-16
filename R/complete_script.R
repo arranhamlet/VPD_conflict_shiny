@@ -1,25 +1,8 @@
-library(shiny)
-library(tidyverse)
-library(odin2)
-library(dust2)
-library(bslib)
-library(DT)
 
+# Import functions and data through source script -------------------------
 
-# Countries of interest
-countries <- data.frame(
-  name = c("Syria", "Palestine", "Yemen", "Nigeria", "Ethiopia", "Sudan",
-           "Myanmar", "Papa New Guinea", "Afghanistan", "Venezuela", "Haiti", "Guatemala",
-           "Chad", "Democratic Republic of the Congo", "Burkina Faso", "Somalia", "The United Kingdom"),
-  iso = c("SYR", "PSE", "YEM", "NGA", "ETH", "SDN", "MMR", "PNG", "AFG", "VEN", "HTI", "GTM",
-          "TCD", "DRC", "BFA", "SOM", "GBR")
-)
+source("R/source_script.R")
 
-# Diseases of interest
-diseases_of_interest <- data.frame(
-  disease = c("Diphtheria", "Measles", "Pertussis"),
-  default_R0 = c(15, 12, 3)
-)
 
 # UI ----------------------------------------------------------------------
 
@@ -56,41 +39,46 @@ jameel_theme <- bs_add_rules(jameel_theme, "
 
 
 ui <- fluidPage(
-  theme = jameel_theme,  
+  # theme = jameel_theme,
+  theme = bs_theme(present = "litera"),
   # Custom styling for sidebar + DataTable scroll
   tags$head(
     tags$style(HTML("
-      .sidebar-custom {
-        font-size: 0.85rem;
-      }
-      .sidebar-custom .form-control,
-      .sidebar-custom .selectize-input {
-        font-size: 0.85rem;
-      }
-      .sidebar-custom h4 {
-        font-size: 1rem;
-        margin-top: 1rem;
-      }
-      .dataTables_wrapper {
-        width: 100% !important;
-      }
-      .dataTables_scrollBody {
-        max-height: 200px !important;
-        overflow-y: auto !important;
-      }
-    "))
+    .sidebar-custom {
+      font-size: 0.85rem;
+    }
+    .sidebar-custom .form-control,
+    .sidebar-custom .selectize-input {
+      font-size: 0.85rem;
+    }
+    .sidebar-custom h4 {
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+    .dataTables_wrapper {
+      width: 100% !important;
+    }
+    .dataTables_scrollBody {
+      max-height: 200px !important;
+      overflow-y: auto !important;
+    }
+    .dt-head-wrap {
+      white-space: normal !important;
+      word-wrap: break-word;
+    }
+  "))
   ),
   div(
     class = "d-flex align-items-center p-3 mb-3 border-bottom",
     img(src = "imperial_ji_logo.png", height = "50px", style = "margin-right: 15px;"),
     div(
-      h2("Jameel Institute Simulator", class = "mb-0", style = "font-weight: 500; color: #021c35;")
+      h2("Jameel Institute Crisis Vaccination Planner (JICVP)", class = "mb-0", style = "font-weight: 500; color: #0000cd;")
     )
   ),
   navset_card_underline(
     nav_panel("Model Setup",
               layout_columns(
-                col_widths = c(4, 8),
+                col_widths = c(2, 8),
                 
                 # Sidebar
                 div(
@@ -107,11 +95,15 @@ ui <- fluidPage(
                   # h4("Years of simulation"),
                   sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
                   
-                  h4("Routine vaccination coverage by year"),
+                  h4("Future events"),
                   div(style = "height: 220px;",
                       DTOutput("input_coverage_table")
-                  )
-          
+                  ),
+                  
+                  actionButton("run_model", "Run simulations",
+                               icon("play"), 
+                               style="color: #fff; background-color: #ab1940; border-color: #021c35")
+                  
                 ),
                 
                 # Main content
@@ -138,7 +130,7 @@ server <- function(input, output, session) {
   last_n <- reactiveVal(3)
   
   current_data <- reactiveVal(
-    data.frame(Year = 0:2, `Vaccination coverage` = rep(0, 3))
+    data.frame(Year = 0:2, seed = rep(0, 3), `Vaccination coverage` = rep(0, 3))
   )
   
   observeEvent(input$years, {
@@ -149,6 +141,7 @@ server <- function(input, output, session) {
     if (n_new > n_old) {
       added_rows <- data.frame(
         Year = n_old:(n_new - 1),
+        seed = rep(0, n_new - n_old),
         `Vaccination coverage` = rep(0, n_new - n_old)
       )
       df_new <- rbind(df_old, added_rows)
@@ -165,25 +158,43 @@ server <- function(input, output, session) {
       current_data(),
       editable = list(target = "cell", disable = list(columns = c(0))),
       rownames = FALSE,
+      colnames = c("Year", "Seeded infections", "Vaccination <br>relative to starting (%)"),
       options = list(
         dom = 't',
         ordering = FALSE,
         scrollY = 200,
         paging = FALSE,
-        scroller = TRUE
-      )
+        scroller = TRUE,
+        columnDefs = list(
+          list(className = 'dt-center', targets = 0:1),
+          list(width = '50px', targets = 0),  # narrower Year column
+          list(width = '200px', targets = 1), # allow coverage column more space
+          list(className = 'dt-head-wrap', targets = "_all")  # wrap all headers
+        )
+      ),
+      escape = FALSE  # needed to allow <br> in colnames
     )
   }, server = FALSE)
   
   observeEvent(input$input_coverage_table_cell_edit, {
     info <- input$input_coverage_table_cell_edit
     i <- info$row
-    j <- info$col + 1
+    j <- info$col + 1  # DT is 0-indexed, R is 1-indexed
     v <- suppressWarnings(as.numeric(info$value))
     
-    if (!is.na(v) && v >= 0 && v <= 100 && j == 2) {
+    if (!is.na(v)) {
       df <- current_data()
-      df[i, j] <- v
+      
+      # Column 2: seed (no upper bound)
+      if (j == 2 && v >= 0) {
+        df[i, j] <- v
+      }
+      
+      # Column 3: vaccination coverage (0–100%)
+      if (j == 3 && v >= 0 && v <= 100) {
+        df[i, j] <- v
+      }
+      
       current_data(df)
     }
   })
@@ -198,4 +209,4 @@ server <- function(input, output, session) {
   })
 }
 
-
+shinyApp(ui, server)
