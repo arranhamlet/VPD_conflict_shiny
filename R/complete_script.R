@@ -5,11 +5,14 @@ library(dust2)
 library(bslib)
 library(DT)
 
+
 # Countries of interest
 countries <- data.frame(
   name = c("Syria", "Palestine", "Yemen", "Nigeria", "Ethiopia", "Sudan",
-           "Myanmar", "Papa New Guinea", "Afghanistan", "Venezuela", "Haiti", "Guatemala"),
-  iso = c("SYR", "PSE", "YEM", "NGA", "ETH", "SDN", "MMR", "PNG", "AFG", "VEN", "HTI", "GTM")
+           "Myanmar", "Papa New Guinea", "Afghanistan", "Venezuela", "Haiti", "Guatemala",
+           "Chad", "Democratic Republic of the Congo", "Burkina Faso", "Somalia", "The United Kingdom"),
+  iso = c("SYR", "PSE", "YEM", "NGA", "ETH", "SDN", "MMR", "PNG", "AFG", "VEN", "HTI", "GTM",
+          "TCD", "DRC", "BFA", "SOM", "GBR")
 )
 
 # Diseases of interest
@@ -20,9 +23,40 @@ diseases_of_interest <- data.frame(
 
 # UI ----------------------------------------------------------------------
 
+
+# Define theme
+jameel_theme <- bs_theme(
+  version = 5,
+  base_font = "Imperial Sans",
+  heading_font = "Imperial Sans Display",
+  primary = "#0000cd",
+  secondary = "#ab1940",
+  success = "#0000ae",
+  bg = "#fdfdfd",
+  fg = "#021c35",
+  font_scale = 1
+)
+
+# Add @font-face CSS rules for custom fonts in /www/
+jameel_theme <- bs_add_rules(jameel_theme, "
+  @font-face {
+    font-family: 'Imperial Sans';
+    src: url('ImperialSansText-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'Imperial Sans Display';
+    src: url('ImperialSansDisplay-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+  }
+")
+
+
 ui <- fluidPage(
-  theme = bs_theme(bootswatch = "litera", font_scale = 0.9),
-  
+  theme = jameel_theme,  
   # Custom styling for sidebar + DataTable scroll
   tags$head(
     tags$style(HTML("
@@ -46,9 +80,13 @@ ui <- fluidPage(
       }
     "))
   ),
-  
-  titlePanel("Infectious Disease Simulation"),
-  
+  div(
+    class = "d-flex align-items-center p-3 mb-3 border-bottom",
+    img(src = "imperial_ji_logo.png", height = "50px", style = "margin-right: 15px;"),
+    div(
+      h2("Jameel Institute Simulator", class = "mb-0", style = "font-weight: 500; color: #021c35;")
+    )
+  ),
   navset_card_underline(
     nav_panel("Model Setup",
               layout_columns(
@@ -58,15 +96,15 @@ ui <- fluidPage(
                 div(
                   class = "sidebar-custom p-3 bg-light border rounded",
                   
-                  h4("Demographic characteristics"),
+                  # h4("Demographic characteristics"),
                   selectInput("country", "Country", countries$name),
                   numericInput("popsize", "Population size", 1000, min = 1, max = 2e9),
                   
-                  h4("Disease parameters"),
+                  # h4("Disease parameters"),
                   selectInput("disease", "Disease of interest", diseases_of_interest$disease, selected = "Diphtheria"),
                   uiOutput("r0_input"),
                   
-                  h4("Years of simulation"),
+                  # h4("Years of simulation"),
                   sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
                   
                   h4("Routine vaccination coverage by year"),
@@ -160,5 +198,4 @@ server <- function(input, output, session) {
   })
 }
 
-# Launch App
-shinyApp(ui, server)
+
