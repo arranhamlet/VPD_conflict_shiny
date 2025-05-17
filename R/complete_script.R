@@ -75,7 +75,9 @@ ui <- fluidPage(
       h2("Jameel Institute Crisis Vaccination Planner (JICVP)", class = "mb-0", style = "font-weight: 500; color: #0000cd;")
     )
   ),
+  
   navset_card_underline(
+    
     nav_panel("Model Setup",
               layout_columns(
                 col_widths = c(2, 8),
@@ -83,26 +85,25 @@ ui <- fluidPage(
                 # Sidebar
                 div(
                   class = "sidebar-custom p-3 bg-light border rounded",
+                  style = "display: flex; flex-direction: column; height: auto;",
                   
-                  # h4("Demographic characteristics"),
                   selectInput("country", "Country", countries$name),
                   numericInput("popsize", "Population size", 1000, min = 1, max = 2e9),
                   
-                  # h4("Disease parameters"),
                   selectInput("disease", "Disease of interest", diseases_of_interest$disease, selected = "Diphtheria"),
                   uiOutput("r0_input"),
                   
-                  # h4("Years of simulation"),
-                  sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
+                  sliderInput("years", "Years of simulation", 1, min = 1, max = 8),
                   
                   h4("Future events"),
-                  div(style = "height: 220px;",
-                      DTOutput("input_coverage_table")
-                  ),
-                  
-                  actionButton("run_model", "Run simulations",
-                               icon("play"), 
-                               style="color: #fff; background-color: #ab1940; border-color: #021c35")
+                  div(
+                    style = "display: flex; flex-direction: column;",
+                    DTOutput("input_coverage_table"),
+                    div(style = "margin-top: 15px;"),
+                    actionButton("run_model", "Run simulations",
+                                 icon("play"), 
+                                 style = "color: #fff; background-color: #ab1940; border-color: #021c35")
+                  )
                   
                 ),
                 
