@@ -1,11 +1,11 @@
 
-# Import functions and data through source script -------------------------
+# Load required libraries
+library(shiny)
+library(bslib)
+library(DT)
 
+# Source helper functions and data
 source("R/source_script.R")
-
-
-# UI ----------------------------------------------------------------------
-
 
 # Define theme
 jameel_theme <- bs_theme(
@@ -20,7 +20,7 @@ jameel_theme <- bs_theme(
   font_scale = 1
 )
 
-# Add @font-face CSS rules for custom fonts in /www/
+# Add font CSS
 jameel_theme <- bs_add_rules(jameel_theme, "
   @font-face {
     font-family: 'Imperial Sans';
@@ -28,7 +28,6 @@ jameel_theme <- bs_add_rules(jameel_theme, "
     font-weight: normal;
     font-style: normal;
   }
-
   @font-face {
     font-family: 'Imperial Sans Display';
     src: url('ImperialSansDisplay-Medium.ttf') format('truetype');
@@ -37,96 +36,52 @@ jameel_theme <- bs_add_rules(jameel_theme, "
   }
 ")
 
-
-ui <- fluidPage(
-  # theme = jameel_theme,
-  theme = bs_theme(present = "litera"),
-  # Custom styling for sidebar + DataTable scroll
-  tags$head(
-    tags$style(HTML("
-    .sidebar-custom {
-      font-size: 0.85rem;
-    }
-    .sidebar-custom .form-control,
-    .sidebar-custom .selectize-input {
-      font-size: 0.85rem;
-    }
-    .sidebar-custom h4 {
-      font-size: 1rem;
-      margin-top: 1rem;
-    }
-    .dataTables_wrapper {
-      width: 100% !important;
-    }
-    .dataTables_scrollBody {
-      max-height: 200px !important;
-      overflow-y: auto !important;
-    }
-    .dt-head-wrap {
-      white-space: normal !important;
-      word-wrap: break-word;
-    }
-  "))
-  ),
-  div(
-    class = "d-flex align-items-center p-3 mb-3 border-bottom",
+# UI
+ui <- page_sidebar(
+  title = div(
+    class = "d-flex align-items-center",
     img(src = "imperial_ji_logo.png", height = "50px", style = "margin-right: 15px;"),
+    div(h4("Jameel Institute Crisis Vaccination Planner (JICVP)",
+           class = "mb-0", style = "font-weight: 500; color: #0000cd;"))
+  ),
+  theme = jameel_theme,
+  sidebar_width = "420px",
+  sidebar = sidebar(  # ✅ THIS IS THE KEY FIX
+    width = '20%',
     div(
-      h2("Jameel Institute Crisis Vaccination Planner (JICVP)", class = "mb-0", style = "font-weight: 500; color: #0000cd;")
+      class = "sidebar-custom p-3 bg-light border rounded",
+      style = "display: flex; flex-direction: column; height: auto; overflow: visible;",
+      selectInput("country", "Country", countries$name, selected =  "Nigeria") %>%
+        tooltip("Country determines demographics and contact patterns."),
+      numericInput("popsize", "Population size", 10000, min = 1, max = 2e9) %>%
+        tooltip("This is the population size you want to run the simulation on."),
+      
+      selectInput("disease", "Disease of interest", diseases_of_interest$disease, selected = "Diphtheria") %>%
+        tooltip("Disease determines transmission patterns and vaccination, both historic and future."),
+      uiOutput("r0_input"),
+      sliderInput("years", "Years of simulation", 1, min = 1, max = 5) %>%
+        tooltip("How many years you want to simulate into the future."),
+      
+      h4("Future events"),
+      DTOutput("input_coverage_table") %>%
+        tooltip("Here you can input different introductions of diease, and future vaccination activities, relative to current levels."),
+      
+      div(style = "margin-top: 15px;"),
+      actionButton("run_model", "Run simulations",
+                   icon("play"),
+                   style = "color: #fff; background-color: #ab1940; border-color: #021c35") %>%
+        tooltip("When you are ready, click go!")
     )
   ),
-  
   navset_card_underline(
-    
-    nav_panel("Model Setup",
-              layout_columns(
-                col_widths = c(2, 8),
-                
-                # Sidebar
-                div(
-                  class = "sidebar-custom p-3 bg-light border rounded",
-                  style = "display: flex; flex-direction: column; height: auto;",
-                  
-                  selectInput("country", "Country", countries$name),
-                  numericInput("popsize", "Population size", 1000, min = 1, max = 2e9),
-                  
-                  selectInput("disease", "Disease of interest", diseases_of_interest$disease, selected = "Diphtheria"),
-                  uiOutput("r0_input"),
-                  
-                  sliderInput("years", "Years of simulation", 1, min = 1, max = 8),
-                  
-                  h4("Future events"),
-                  div(
-                    style = "display: flex; flex-direction: column;",
-                    DTOutput("input_coverage_table"),
-                    div(style = "margin-top: 15px;"),
-                    actionButton("run_model", "Run simulations",
-                                 icon("play"), 
-                                 style = "color: #fff; background-color: #ab1940; border-color: #021c35")
-                  )
-                  
-                ),
-                
-                # Main content
-                div(
-                  class = "p-3",
-                  h4("Main panel output will go here.")
-                )
-              )
-    ),
-    
-    nav_panel("Model outputs",
-              h4("Results tab content here.")
-    ),
-    
-    nav_panel("Methods",
-              h4("Methods tab content here.")
-    )
+    nav_panel("Model Setup", h4("Main panel output will go here.")),
+    nav_panel("Model outputs", h4("Results tab content here.")),
+    nav_panel("Methods", h4("Methods tab content here."))
   )
 )
 
-# Server ------------------------------------------------------------------
 
+# Server
 server <- function(input, output, session) {
   last_n <- reactiveVal(3)
   
@@ -159,43 +114,32 @@ server <- function(input, output, session) {
       current_data(),
       editable = list(target = "cell", disable = list(columns = c(0))),
       rownames = FALSE,
-      colnames = c("Year", "Seeded infections", "Vaccination <br>relative to starting (%)"),
+      colnames = c("Year", "Seeded infections", "Vaccination relative to starting (%)"),
       options = list(
         dom = 't',
         ordering = FALSE,
-        scrollY = 200,
         paging = FALSE,
-        scroller = TRUE,
+        scrollX = FALSE,
+        autoWidth = TRUE,
         columnDefs = list(
-          list(className = 'dt-center', targets = 0:1),
-          list(width = '50px', targets = 0),  # narrower Year column
-          list(width = '200px', targets = 1), # allow coverage column more space
-          list(className = 'dt-head-wrap', targets = "_all")  # wrap all headers
+          list(className = 'dt-center', targets = 0:2),
+          list(className = 'dt-head-wrap', targets = "_all")
         )
       ),
-      escape = FALSE  # needed to allow <br> in colnames
+      escape = FALSE
     )
   }, server = FALSE)
   
   observeEvent(input$input_coverage_table_cell_edit, {
     info <- input$input_coverage_table_cell_edit
     i <- info$row
-    j <- info$col + 1  # DT is 0-indexed, R is 1-indexed
+    j <- info$col + 1
     v <- suppressWarnings(as.numeric(info$value))
     
     if (!is.na(v)) {
       df <- current_data()
-      
-      # Column 2: seed (no upper bound)
-      if (j == 2 && v >= 0) {
-        df[i, j] <- v
-      }
-      
-      # Column 3: vaccination coverage (0–100%)
-      if (j == 3 && v >= 0 && v <= 100) {
-        df[i, j] <- v
-      }
-      
+      if (j == 2 && v >= 0) df[i, j] <- v
+      if (j == 3 && v >= 0 && v <= 100) df[i, j] <- v
       current_data(df)
     }
   })
@@ -205,9 +149,17 @@ server <- function(input, output, session) {
     default_r0 <- diseases_of_interest$default_R0[
       diseases_of_interest$disease == selected_disease
     ]
+    min_R0 <- diseases_of_interest$min_R0[
+      diseases_of_interest$disease == selected_disease
+    ]
+    max_R0 <- diseases_of_interest$max_R0[
+      diseases_of_interest$disease == selected_disease
+    ]
     
-    numericInput("r0", "Basic reproductive number (R0)", value = default_r0)
+    sliderInput("r0", "Basic reproductive number (R0)", value = default_r0, min = min_R0, max = max_R0) %>%
+      tooltip("R0 determines how infectious your disease is.")
   })
 }
 
+# Run the app
 shinyApp(ui, server)
