@@ -108,13 +108,13 @@ ui <- fluidPage(
                 
                 # Sidebar
                 div(
-                  id = "sidebar-panel",
+                  id = "sidebar-panel1",
                   class = "sidebar-custom p-3 bg-light border rounded",
                   style = "display: flex; flex-direction: column; height: auto;",
                   
                   selectInput("country", "Country", selected = "Palestine", choices = countries$name),
                   uiOutput("pop_input"),
-                  selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Diphtheria"),
+                  selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"),
                   uiOutput("r0_input"),
                   
                   sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
@@ -134,18 +134,52 @@ ui <- fluidPage(
                 # Main content
                 div(
                   class = "p-3",
-                  plotOutput("model_plot")
+                  plotOutput("model_plot") %>% withSpinner(color = "#E5E4E2")
                 )
               )
     ),
     
     nav_panel("Model outputs",
-              h4("Results tab content here.")
+              layout_columns(
+                col_widths = c(2, 10),
+                
+                # Sidebar
+                div(
+                  id = "sidebar-panel",
+                  class = "sidebar-custom p-3 bg-light border rounded",
+                  style = "display: flex; flex-direction: column; height: auto;",
+                  
+                  selectInput("country", "Country", selected = "Palestine", choices = countries$name),
+                  uiOutput("pop_input"),
+                  selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"),
+                  uiOutput("r0_input"),
+                  
+                  sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
+                  
+                  h4("Future events"),
+                  div(
+                    style = "display: flex; flex-direction: column;",
+                    DTOutput("input_coverage_table"),
+                    div(style = "margin-top: 15px;"),
+                    actionButton("run_model", "Run simulations",
+                                 icon("play"), 
+                                 style = "color: #fff; background-color: #ab1940; border-color: #021c35")
+                  )
+                  
+                ),
+                
+                # Main content
+                div(
+                  class = "p-3",
+                  plotOutput("results_plot") %>% withSpinner(color = "#E5E4E2")
+                )
+              )
     ),
     
-    nav_panel("Methods",
-              h4("Methods tab content here.")
-    )
+    nav_panel("About",
+              uiOutput("ui_overview")
+    ),
+    
   )
   
 )
@@ -154,6 +188,9 @@ ui <- fluidPage(
 # Server ------------------------------------------------------------------
 
 server <- function(input, output, session) {
+  
+  
+  ## FUTRE VALUE UI -----------------------------------------------------
   last_n <- reactiveVal(3)
   
   current_data <- reactiveVal(
@@ -180,6 +217,7 @@ server <- function(input, output, session) {
     last_n(n_new)
   })
   
+  # TODO: User limits on values for table
   output$input_coverage_table <- renderDT({
     datatable(
       current_data(),
@@ -226,6 +264,7 @@ server <- function(input, output, session) {
     }
   })
   
+  ## REACTIVE UI INPUTS -----------------------------------------------------
   output$pop_input <- renderUI({
     country <- input$country
     iso3c <- countrycode::countrycode(country, "country.name.en", "iso3c")
@@ -253,8 +292,7 @@ server <- function(input, output, session) {
     numericInput("r0", "Basic reproductive number (R0)", value = default_r0, max = max_r0)
   })
   
-  
-  
+  ## PLOT 1 -----------------------------------------------------
   # Observe the button click to trigger the plot generation
   plot_output <- eventReactive(input$run_model, {
     
@@ -276,6 +314,40 @@ server <- function(input, output, session) {
   width = function() {
     req(input$dimension)
     0.9 * as.numeric(input$dimension[1])
+  })
+  
+  ## PLOT 2-----------------------------------------------------
+  # Observe the button click to trigger the plot generation
+  plot_results <- eventReactive(input$run_model, {
+    
+    df <- current_data()  # get current user-edited table
+    
+    # Call your custom function and generate plot based on inputs
+    plot_two(country = input$country,
+             n = input$popsize,
+             disease = input$disease,
+             r0 = input$r0,
+             user_df = df)
+    
+  })
+  
+  output$results_plot <- renderPlot({
+    plot_results()
+  }, 
+  height = function() {
+    req(input$dimension)
+    0.7 * as.numeric(input$dimension[2])
+  },
+  width = function() {
+    req(input$dimension)
+    0.9 * as.numeric(input$dimension[1])
+  })
+  
+  ## ABOUT -----------------------------------------------------
+  
+  # Fetch markdown about
+  output$ui_overview <- renderUI({
+    includeMarkdown("www/about.md")
   })
   
 }
