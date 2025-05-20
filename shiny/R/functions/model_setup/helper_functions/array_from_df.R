@@ -1,0 +1,1 @@
+array_from_df <- function(...) df_to_array(generate_array_df(...))

@@ -1,0 +1,21 @@
+disease,parameter,age_min,age_max,description,value,high_value,low_value,source
+Measles,incubation_period,all,all,Incubation period (days),12,14,10,https://www.contagionlive.com/view/measles-an-old-foe-has-returned
+Measles,recovery_rate,all,all,Infectious period (days),8,9,7,https://www.ecdc.europa.eu/en/measles/facts
+Measles,cfr,0,4,CFR 0-4 years (%),1,1.5,0.5,https://www.cdc.gov/measles/downloads/measlesdataandstatsslideset.pdf
+Measles,cfr,5,17,CFR 5-17 years (%),0.5,1,0.2,https://www.cdc.gov/measles/downloads/measlesdataandstatsslideset.pdf
+Measles,cfr,18,64,CFR 18-64 years (%),0.2,0.5,0.1,https://www.cdc.gov/measles/downloads/measlesdataandstatsslideset.pdf
+Measles,cfr,65,100,CFR 65+ years (%),3,4,2,https://www.cdc.gov/measles/downloads/measlesdataandstatsslideset.pdf
+Measles,natural_immunity_waning,all,all,Natural waning of immunity (per year),0.0022,0.003,0.001,https://www.sciencedirect.com/science/article/pii/S0264410X23009507
+Measles,prop_severe,0,4,Proportion of severe cases 0-4 years (%),19,25,15,https://www.cdc.gov/measles/data-research/index.html
+Measles,prop_severe,5,17,Proportion of severe cases 5-17 years (%),7,10,5,https://www.cdc.gov/measles/data-research/index.html
+Measles,prop_severe,18,64,Proportion of severe cases 18-64 years (%),6,8,4,https://www.cdc.gov/measles/data-research/index.html
+Measles,prop_severe,65,100,Proportion of severe cases 65+ years (%),20,25,15,https://www.cdc.gov/measles/data-research/index.html
+Measles,prop_complications,0,4,Severe cases with complications 0-4 years (%),10,15,5,https://www.cdc.gov/measles/downloads/measlesdataandstatsslideset.pdf
+Measles,prop_complications,5,17,Severe cases with complications 5-17 years (%),5,10,2,https://www.cdc.gov/measles/downloads/measlesdataandstatsslideset.pdf
+Measles,prop_complications,18,64,Severe cases with complications 18-64 years (%),5,10,2,https://www.cdc.gov/measles/downloads/measlesdataandstatsslideset.pdf
+Measles,prop_complications,65,100,Severe cases with complications 65+ years (%),15,20,10,https://www.cdc.gov/measles/downloads/measlesdataandstatsslideset.pdf
+Measles,R0,all,all,Basic reproduction number (R0),15,18,12,https://www.nature.com/articles/d41586-025-00786-w
+Measles,age_vaccination_beta_modifier,all,all,"MMR vaccine short-term protection (1 dose, %)",93,95,90,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7026886/
+Measles,age_vaccination_beta_modifier,all,all,"MMR vaccine long-term protection (2 doses, %)",97,99,95,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7026886/
+Measles,long_term_waning,all,all,Duration of protection after 1 dose (years),10,15,5,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7026886/
+Measles,long_term_waning,all,all,Duration of protection after 2 doses (years),75,100,20,https://www.cdc.gov/vaccines/vpd/mmr/hcp/about.html
