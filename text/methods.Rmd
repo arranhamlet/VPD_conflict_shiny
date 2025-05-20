@@ -71,7 +71,7 @@ JICVP is developed by the Jameel Institute at Imperial College London, with cont
 7) London School of Hygiene and Tropical Medicine, London, UK.
 
 # Funding Acknowledgements
-This project is supported by [Community Jameel](https://www.communityjameel.org/) as part of the Jameel Institute – Realtime Intelligent Support for Emergencies (JI-RISE) initiative, under the Epidemiology and Analytics for Response (EAR) unit.
+This project is supported by [Community Jameel](https://www.communityjameel.org/) as part of the Jameel Institute – Realtime Intelligent Support for Emergencies (RISE) initiative, under the Epidemiology and Analytics for Response (EAR) unit.
 
 ---
 
