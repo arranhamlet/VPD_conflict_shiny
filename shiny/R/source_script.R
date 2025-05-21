@@ -74,7 +74,7 @@ invisible(sapply(list.files(
 
 #Import model
 model <- odin2::odin("model/stochastic_model_v1.R")
-
+ 
 # Plot 1 ----------------------
 
 # Poster Plot 1 on Demographics and susceptibility ---------

@@ -254,7 +254,20 @@ server <- function(input, output, session) {
              population = population*1000) %>% 
       pull(population) %>% 
       sum() %>% round()
-    numericInput("popsize", "Population size", value = n, min = 1, max = 2e9)
+    shinyWidgets::autonumericInput(
+      inputId = "popsize",
+      label = "Population size",
+      value = n,
+      min = 1,
+      max = 2e9,
+      decimalPlaces = 0,
+      digitGroupSeparator = ",",
+      decimalCharacter = ".",
+      currencySymbol = "",
+      currencySymbolPlacement = "s",
+      style = "text-align: left;"
+    )
+    
   })
   
   output$r0_input <- renderUI({
