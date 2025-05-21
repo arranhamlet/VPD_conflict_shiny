@@ -1,4 +1,5 @@
 
+
 # Import functions and data through source script -------------------------
 
 source("R/source_script.R")
@@ -62,7 +63,6 @@ create_sidebar_panel <- function() {
     )
   )
 }
-
 
 ui <- fluidPage(
   # theme = jameel_theme,
@@ -152,10 +152,19 @@ ui <- fluidPage(
     create_sidebar_panel(),
     navset_card_underline(
       nav_panel("Model Setup", plotOutput("model_plot") %>% withSpinner(color = "#E5E4E2")),
-      nav_panel("Model Outputs", plotOutput("results_plot") %>% withSpinner(color = "#E5E4E2")),
+      nav_panel("Model Outputs",
+                div(
+                  style = "margin-bottom: 2rem;",
+                  plotOutput("results_plot", height = "600px") %>% withSpinner(color = "#E5E4E2"),
+                  br(),
+                  fluidRow(
+                    column(width = 3, offset = 2, uiOutput("susceptibility_info")),
+                    column(width = 3, offset = 2, uiOutput("case_info"))
+                  )
+                )
+      ),
       nav_panel("About", uiOutput("ui_overview"))
-    ),
-    
+    )
   )
   
 )
@@ -170,7 +179,7 @@ server <- function(input, output, session) {
   last_n <- reactiveVal(3)
   
   current_data <- reactiveVal(
-    data.frame(Year = 0:2, seed = rep(0, 3), `Vaccination coverage` = rep(0, 3))
+    data.frame(Year = 0:2, seed = rep(0, 3), 'Vaccination coverage' = rep(0, 3))
   )
   
   observeEvent(input$years, {
@@ -182,7 +191,7 @@ server <- function(input, output, session) {
       added_rows <- data.frame(
         Year = n_old:(n_new - 1),
         seed = rep(0, n_new - n_old),
-        `Vaccination coverage` = rep(0, n_new - n_old)
+        'Vaccination coverage' = rep(0, n_new - n_old)
       )
       df_new <- rbind(df_old, added_rows)
     } else {
@@ -222,20 +231,20 @@ server <- function(input, output, session) {
     i <- info$row
     j <- info$col + 1  # DT is 0-indexed, R is 1-indexed
     v <- suppressWarnings(as.numeric(info$value))
-
+    
     if (!is.na(v)) {
       df <- current_data()
-
+      
       # Column 2: seed (no upper bound)
       if (j == 2 && v >= 0) {
         df[i, j] <- v
       }
-
+      
       # Column 3: vaccination coverage (0–100%)
       if (j == 3 && v >= 0 && v <= 100) {
         df[i, j] <- v
       }
-
+      
       current_data(df)
     }
   })
@@ -254,7 +263,20 @@ server <- function(input, output, session) {
              population = population*1000) %>% 
       pull(population) %>% 
       sum() %>% round()
-    numericInput("popsize", "Population size", value = n, min = 1, max = 2e9)
+    shinyWidgets::autonumericInput(
+      inputId = "popsize",
+      label = "Population size",
+      value = n,
+      min = 1,
+      max = 2e9,
+      decimalPlaces = 0,
+      digitGroupSeparator = ",",
+      decimalCharacter = ".",
+      currencySymbol = "",
+      currencySymbolPlacement = "s",
+      style = "text-align: left;"
+    )
+    
   })
   
   output$r0_input <- renderUI({
@@ -269,7 +291,7 @@ server <- function(input, output, session) {
       diseases_of_interest$disease == selected_disease
     ]
     
-    sliderInput("r0", "Basic reproductive number (R0)", value = default_r0, min = min_r0, max = max_r0)
+    numericInput("r0", "Basic reproductive number (R0)", value = default_r0, min = min_r0, max = max_r0)
   })
   
   ## PLOT Scaling
@@ -324,18 +346,53 @@ server <- function(input, output, session) {
   
   ## PLOT 2-----------------------------------------------------
   # Observe the button click to trigger the plot generation
-  plot_results <- eventReactive(input$run_model, {
+  model_data <- eventReactive(input$run_model, {
+    df <- current_data()
     
-    df <- current_data()  # get current user-edited table
-    
-    # Call your custom function and generate plot based on inputs
-    plot_two(country = input$country,
-             n = input$popsize,
-             disease = input$disease,
-             r0 = input$r0,
-             user_df = df)
+    generate_model_data(
+      country = input$country,
+      n = input$popsize,
+      disease = input$disease,
+      r0 = input$r0,
+      user_df = df
+    )
     
   })
+  
+  stats <- reactive({
+    req(model_data())
+    summary_stats(model_data())
+  })
+  
+  plot_results <- reactive({
+    req(model_data())  # Wait until model_data is available
+    plot_two(model_data())
+  })
+  
+  output$susceptibility_info <- renderUI({
+    req(stats())
+    value_box(
+      value = tags$div(stats()[1], style = "font-weight: bold; font-size: 1.5rem;"),
+      title = "",
+      theme = value_box_theme(
+        bg = "#ab1940",
+        fg = "white"
+      )
+    )
+  })
+  
+  output$case_info <- renderUI({
+    req(stats())
+    value_box(
+      value = tags$div(stats()[2], style = "font-weight: bold; font-size: 1.5rem;"),
+      theme = value_box_theme(
+        bg = "#ab1940",
+        fg = "white"
+      ),
+      title = ""
+    )
+  })
+  
   
   output$results_plot <- renderPlot({
     basepl2 <- plot_results()
@@ -354,7 +411,7 @@ server <- function(input, output, session) {
   height = function() {
     req(input$dimension)
     req(dimension_debounced())
-    0.9 * dimension_debounced()[2]
+    0.7 * dimension_debounced()[2]
   },
   width = function() {
     req(input$dimension)    

@@ -6,6 +6,9 @@ library(bslib)
 library(DT)
 library(shinycssloaders)
 library(shinyWidgets)
+library(later)
+library(shinydashboard)
+
 #Load packages
 pacman::p_load(
   odin2,
@@ -24,23 +27,6 @@ pacman::p_load(
   ggthemr
 )
 
-# Countries of interest
-countries <- data.frame(
-  name = c("Syria", "Palestine", "Yemen", "Nigeria", "Ethiopia", "Sudan",
-           "Myanmar", "Papa New Guinea", "Afghanistan", "Venezuela", "Haiti", "Guatemala",
-           "Chad", "Democratic Republic of the Congo", "Burkina Faso", "Somalia", "The United Kingdom"),
-  iso = c("SYR", "PSE", "YEM", "NGA", "ETH", "SDN", "MMR", "PNG", "AFG", "VEN", "HTI", "GTM",
-          "TCD", "DRC", "BFA", "SOM", "GBR")
-)
-
-# Diseases of interest
-diseases_of_interest <- data.frame(
-  disease = c("Diphtheria", "Measles", "Pertussis"),
-  default_R0 = c(3, 15, 8), 
-  max_R0 = c(7, 18, 15),
-  min_R0 = c(1, 12, 9)
-)
-
 ## Setup and Gather Data ------------
 options(scipen = 999)
 population_all <- import("data/processed/WPP/age_both.csv")
@@ -52,16 +38,41 @@ starting_immunity <- import("output/model_run/MSF/processed/susceptibility.csv")
 full_disease_df <- import("data/processed/WHO/reported_cases_data.csv")
 
 #Rdata files
-all_Rdata <- list.files("output/model_run/MSF/processed/",
-                        pattern = ".rds",
-                        full.names = T)
-all_Rdata_names <- sapply(strsplit(all_Rdata, "/"), function(e)
-  gsub(".rds", "", last(e)))
-all_Rdata_loaded <- sapply(all_Rdata, function(x)
-  import(x), simplify = FALSE)
-names(all_Rdata_loaded) <- all_Rdata_names
+all_Rdata_loaded <- readRDS("output/model_run/MSF/processed/full_rds.rds")
 
+# Countries of interest
+data_available <- t(Reduce(data.frame, strsplit(names(all_Rdata_loaded ), "_"))) %>%
+  as.data.frame() %>%
+  setnames(
+    c("iso", "disease", "R0")
+  ) %>%
+  mutate(country = countrycode::countrycode(
+    sourcevar = iso,
+    origin = "iso3c",
+    destination = "country.name.en"
+  )) %>%
+  mutate(
+    country = case_when(
+      country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo",
+      country == "Myanmar (Burma)" ~ "Myanmar",
+      country == "Palestinian Territories" ~ "Palestine",
+      TRUE ~ country
+    )
+  )
 
+countries <- data.frame(
+  name = unique(data_available$country),
+  iso = unique(data_available$iso)
+) %>%
+  subset(!is.na(name))
+
+# Diseases of interest
+diseases_of_interest <- data.frame(
+  disease = c("Diphtheria", "Measles", "Pertussis"),
+  default_R0 = c(4, 15, 12), 
+  max_R0 = c(7, 18, 15),
+  min_R0 = c(1, 12, 9)
+)
 
 #Import functions
 invisible(sapply(list.files(
@@ -79,7 +90,7 @@ model <- odin2::odin("model/stochastic_model_v1.R")
 
 # Poster Plot 1 on Demographics and susceptibility ---------
 
-plot_one <- function(country, n, disease, r0) {
+plot_one <- function(country, n, disease, r0, vertical = F) {
   iso3c <- countrycode::countrycode(country, "country.name.en", "iso3c")
   dis_match <- c("diphtheria", "measles", "pertussis")[match(disease, c("Diphtheria", "Measles", "Pertussis"))]
   
@@ -93,10 +104,12 @@ plot_one <- function(country, n, disease, r0) {
            population = population / sum(population) * n)
   
   #Prior vaccination coverage
+  if(grepl("Diphtheria|Pertussis", dis_match, ignore.case = T)) vac_disease <- paste0(disease, "|DTPCV1|DTPCV3|DTaP|DT|DTwP", collapse = "") else vac_disease <- disease
+  
   routine_subset <- routine_vaccination_data %>%
     subset(
       CODE == iso3c &
-        grepl(disease, ANTIGEN_DESCRIPTION, ignore.case = T) &
+        grepl(vac_disease, ANTIGEN_DESCRIPTION, ignore.case = T) &
         COVERAGE_CATEGORY == "WUENIC"
     ) %>%
     clean_names() %>%
@@ -106,6 +119,7 @@ plot_one <- function(country, n, disease, r0) {
   
   #Full starting immunity
   starting_immunity <- starting_immunity %>%
+    subset(iso == iso3c & disease == dis_match & R0 == r0) %>%
     mutate(status = factor(
       status,
       levels = c(
@@ -115,7 +129,7 @@ plot_one <- function(country, n, disease, r0) {
         "Vaccine and exposure protected"
       )
     ))
-
+  
   ## Plotting ----------------
   ggthemr::ggthemr("fresh", text_size = 18)
   
@@ -133,7 +147,7 @@ plot_one <- function(country, n, disease, r0) {
       axis.title = element_text(size = 18),
       axis.line = element_line(color = "black")
     )
-
+  
   cases_gg <- ggplot(
     data = full_disease_df %>%
       subset(iso3 == iso3c & disease_description == disease),
@@ -181,7 +195,6 @@ plot_one <- function(country, n, disease, r0) {
   
   susceptibility_gg <- ggplot(
     data = starting_immunity %>%
-      filter(R0 == r0) %>%
       mutate(
         status = recode(
           status,
@@ -211,8 +224,13 @@ plot_one <- function(country, n, disease, r0) {
     scale_y_continuous(expand = c(0, 0)) +
     scale_fill_manual(values = protection_cols)
   
-  
-  total_information <- (vaccination_gg / cases_gg / demographics_gg) | susceptibility_gg
+  if(vertical == T){
+    total_information <- (vaccination_gg + cases_gg + demographics_gg + plot_layout(guides = "collect")) / (susceptibility_gg +
+                                                                                                              theme(legend.position = "right")) +
+      guides(fill = guide_legend(ncol = 1))
+  } else {
+    total_information <- (vaccination_gg / cases_gg / demographics_gg) | susceptibility_gg
+  }
   
   return(total_information)
   
@@ -220,17 +238,13 @@ plot_one <- function(country, n, disease, r0) {
 
 
 # Plot 2 -----------------------------
-
-plot_two <- function(country, n, disease, r0, user_df) {
-
+generate_model_data <- function(country, n, disease, r0, user_df){
   # get the iso3c and disease match
   iso3c <- countrycode::countrycode(country, "country.name.en", "iso3c")
   dis_match <- c("diphtheria", "measles", "pertussis")[match(disease, c("Diphtheria", "Measles", "Pertussis"))]
   
   # Pull starting parameters
-  print(which(names(all_Rdata_loaded) == paste(c(iso3c, dis_match, r0), collapse = "_")))
   param_use <- all_Rdata_loaded[[which(names(all_Rdata_loaded) == paste(c(iso3c, dis_match, r0), collapse = "_"))]]
-  
   
   # Create our params for the simulation
   generate_params <- function(param_use, user_df, years, update_vacc = FALSE){
@@ -304,14 +318,20 @@ plot_two <- function(country, n, disease, r0, user_df) {
   # combine models
   combo <- rbind(model_no_change, model_change)
   
+  combo
+  
+}
+
+plot_two <- function(combo, vertical = F) {
+  
   #Calculate susceptibility
   new_cases_go <- combo %>%
     subset(age == "All" & state == "new_case") %>%
-    fgroup_by(time, version) %>%
-    fsummarise(
-      value = median(value),
+    group_by(time, version) %>%
+    summarise(
       value_min = get_95CI(x = value, type = "low"),
-      value_max = get_95CI(x = value, type = "high")
+      value_max = get_95CI(x = value, type = "high"),
+      value = median(value)
     ) %>%
     mutate(value_min = pmax(value_min, 0))
   
@@ -323,12 +343,6 @@ plot_two <- function(country, n, disease, r0, user_df) {
     summarise(value = sum(value)) %>%
     mutate(over_100 = value > 100)
   
-  sum_stats_outbreak_over_100 <- sum_stats %>%
-    group_by(version) %>%
-    summarise(n = n(), over_100 = sum(over_100)) %>%
-    mutate(less_than_100 = n - over_100,
-           prop_diff = less_than_100 / min(less_than_100))
-  
   sum_stats_size <- sum_stats %>%
     group_by(version) %>%
     summarise(
@@ -336,7 +350,7 @@ plot_two <- function(country, n, disease, r0, user_df) {
       value_max = pmax(get_95CI(x = value, type = "high"), 0),
       value = mean(value),
     )
-
+  
   # Create Case Plot
   ggthemr::ggthemr("fresh", text_size = 18)
   case_diff <- ggplot(
@@ -368,8 +382,9 @@ plot_two <- function(country, n, disease, r0, user_df) {
   
   # And get the outbreak plot
   new_cases_go$year  <- as.Date((
-    as.Date("2024-01-01") + lubridate::dyears(new_cases_go$t / 365)
+    as.Date("2024-01-01") + lubridate::dyears(new_cases_go$time / 365)
   ))
+  
   # setting to these names as clearer
   new_cases_go$version <- recode(new_cases_go$version,
                                  "No change" = "Pre-Conflict Vaccination Coverage",
@@ -419,7 +434,6 @@ plot_two <- function(country, n, disease, r0, user_df) {
     inset_element(case_diff, 0.625, 0.4, .99, .9)
   
   # Poster Plot 2a on Declines ---------
-  
   susceptibility_data_all <- subset(combo, state %in% c("S", "E", "I", "R", "Is", "Rc") &
                                       age != "All") %>%
     mutate(
@@ -464,6 +478,10 @@ plot_two <- function(country, n, disease, r0, user_df) {
     as.Date("2024-01-01") + lubridate::dyears(vac_protect_all$time / 365)
   ))
   
+  range <- range(vac_protect_all %>%
+                   subset(status_simple == "Vaccinated" & version == "Reduction in coverage") %>%
+                   pull(prop) * 100)
+  
   percent_vaccinated <- ggplot(
     data = vac_protect_all %>%
       subset(version == "Reduction in coverage"),
@@ -491,8 +509,7 @@ plot_two <- function(country, n, disease, r0, user_df) {
       color = "",
       x = "Year",
       y = "Population Vaccination Coverage (%)"
-    ) +
-    coord_cartesian(ylim = c(65, 80)) +
+    ) + 
     geomtextpath::geom_texthline(
       yintercept = subset(
         vac_protect_all,
@@ -505,13 +522,91 @@ plot_two <- function(country, n, disease, r0, user_df) {
       family = "Helvetica",
       size = 4,
       color = "black"
-    )
+    ) +
+    coord_cartesian(ylim = c(min(range), max(range)))
   
   p1 <- percent_vaccinated + theme(plot.margin = margin(5, 5, 5, 5, "pt"))
   p2 <- combo_plot + theme(plot.margin = margin(5, 5, 5, 5, "pt"))
   
-  total_outbreaks <- p1 + p2 + plot_layout(widths = c(1, 1.4))
+  if(vertical == F){
+    total_outbreaks <- p1 + p2 + plot_layout(widths = c(1, 1.4))
+  } else {
+    total_outbreaks <- (p1 / p2) 
+  }
   
   return(total_outbreaks)
+  
+}
+
+summary_stats <- function(combo){
+  
+  susceptibility_data_all <- subset(combo, 
+                                    # time %in% c(1, max(time)) & 
+                                    state %in% c("S", "E", "I", "R", "Is", "Rc") &
+                                      age != "All") %>%
+    mutate(
+      status = case_when(
+        state == "S" & vaccination == 1 ~ "No vaccine",
+        state == "S" & vaccination > 1 ~ "Vaccine protected",
+        state %in% c("S", "E", "I", "R", "Is", "Rc") &
+          vaccination == 1 ~ "No vaccine",
+        state %in% c("S", "E", "I", "R", "Is", "Rc") &
+          vaccination > 1 ~ "Vaccine protected"
+      ),
+      status = factor(
+        status,
+        levels = c(
+          "Vaccine protected",
+          "No vaccine"
+        )
+      )
+    ) %>%
+    group_by(time, version, status) %>%
+    summarise(value = sum(value)) %>%
+    group_by(time, version) %>%
+    mutate(
+      coverage = value / sum(value, na.rm = T),
+      coverage = case_when(is.nan(coverage) ~ 0, !is.nan(coverage) ~ coverage)
+    )
+  
+  diff <- subset(susceptibility_data_all, version %in% c("Reduction in coverage") & status == "Vaccine protected")
+  diff_percent <- round((subset(diff, time == min(time)) %>% pull(coverage) - subset(diff, time == max(time)) %>% pull(coverage)) * 100, 1)
+  
+  direction <- ifelse(diff_percent  <= 0, "increase", "decrease")
+  
+  button_one <- paste0(
+    abs(diff_percent), "% ", direction, " in the\npopulation protected by vaccination."
+  )
+  
+  #Calculate susceptibility
+  new_cases_go <- combo %>%
+    subset(age == "All" & state == "new_case") %>%
+    group_by(time, version) %>%
+    summarise(
+      value_min = get_95CI(x = value, type = "low"),
+      value_max = get_95CI(x = value, type = "high"),
+      value = median(value)
+    ) %>%
+    mutate(value_min = pmax(value_min, 0)) %>%
+    group_by(version) %>%
+    summarise(
+      value = sum(value),
+      value_min = sum(value_min),
+      value_max = sum(value_max)
+    )
+  
+  reduction <- subset(new_cases_go, version == "Reduction in coverage")
+  status_quo <- subset(new_cases_go, version == "No change")
+  direction <- ifelse(reduction$value >= status_quo$value, "increase", "decrease")
+  
+  value <- round(reduction$value/status_quo$value * 100, 1) - 100
+  value_min <- round(reduction$value_min/status_quo$value_min * 100, 1) - 100
+  value_max <- round(reduction$value_max/status_quo$value_max * 100, 1) - 100
+  values <- sort(c(value, value_min, value_max))
+  
+  button_two <- gsub("NaN|NA", 0, paste0(values[1], "% (95% CI ", values[2], "-", values[3], ") ", direction, " in cases."))
+  
+  c(button_one,
+    button_two)
   
 }
