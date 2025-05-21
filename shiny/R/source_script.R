@@ -470,6 +470,10 @@ plot_two <- function(combo) {
     as.Date("2024-01-01") + lubridate::dyears(vac_protect_all$time / 365)
   ))
   
+  range <- range(vac_protect_all %>%
+                   subset(status_simple == "Vaccinated" & version == "Reduction in coverage") %>%
+                   pull(prop) * 100)
+  
   percent_vaccinated <- ggplot(
     data = vac_protect_all %>%
       subset(version == "Reduction in coverage"),
@@ -497,8 +501,7 @@ plot_two <- function(combo) {
       color = "",
       x = "Year",
       y = "Population Vaccination Coverage (%)"
-    ) +
-    coord_cartesian(ylim = c(65, 80)) +
+    ) + 
     geomtextpath::geom_texthline(
       yintercept = subset(
         vac_protect_all,
@@ -511,7 +514,8 @@ plot_two <- function(combo) {
       family = "Helvetica",
       size = 4,
       color = "black"
-    )
+    ) +
+    coord_cartesian(ylim = c(min(range), max(range)))
   
   p1 <- percent_vaccinated + theme(plot.margin = margin(5, 5, 5, 5, "pt"))
   p2 <- combo_plot + theme(plot.margin = margin(5, 5, 5, 5, "pt"))
@@ -583,10 +587,11 @@ summary_stats <- function(combo){
   status_quo <- subset(new_cases_go, version == "No change")
   direction <- ifelse(reduction$value >= status_quo$value, "increase", "decrease")
   
-  button_two <- paste0(round(reduction$value/status_quo$value * 100, 1), 
-                       "% (95% CI ", round(reduction$value_min/status_quo$value_min * 100, 1),
-                       "-", round(reduction$value_max/status_quo$value_max * 100, 1), 
-                       " )\n", direction, " in cases.")
+  button_two <- gsub("NaN", "0",
+                      paste0(round(reduction$value/status_quo$value * 100, 1), 
+                             "% (95% CI ", round(reduction$value_min/status_quo$value_min * 100, 1),
+                             "-", round(reduction$value_max/status_quo$value_max * 100, 1), 
+                             ")\n", direction, " in cases."))
   
   c(button_one,
     button_two)

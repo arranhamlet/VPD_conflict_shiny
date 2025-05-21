@@ -368,7 +368,7 @@ server <- function(input, output, session) {
     plot_two(model_data())
   })
   
-  output$susceptibility_info <- renderValueBox({
+  output$susceptibility_info <- renderUI({
     req(stats())
     value_box(
       value = tags$div(stats()[1], style = "font-weight: bold; font-size: 1.5rem;"),
@@ -380,14 +380,18 @@ server <- function(input, output, session) {
     )
   })
   
-  output$case_info <- renderValueBox({
+  output$case_info <- renderUI({
     req(stats())
     value_box(
       value = tags$div(stats()[2], style = "font-weight: bold; font-size: 1.5rem;"),
-      style = "background-color: #e6f0ff; color: #ab1940; border-radius: 12px;",
+      theme = value_box_theme(
+        bg = "#ab1940",
+        fg = "white"
+      ),
       title = ""
     )
   })
+  
   
   output$results_plot <- renderPlot({
     basepl2 <- plot_results()
