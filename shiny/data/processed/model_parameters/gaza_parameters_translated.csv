@@ -1,0 +1,214 @@
+disease,age_min_year,age_max_year,parameter,value,value_min,value_max
+"bacterial dysentery",0,0,"cfr",1.72,NA,NA
+"bacterial dysentery",0.0833333333333333,0.916666666666667,"cfr",1.72,NA,NA
+"bacterial dysentery",1,4.91666666666667,"cfr",1,NA,NA
+"bacterial dysentery",5,9,"cfr",0.69,NA,NA
+"bacterial dysentery",10,14,"cfr",0.69,NA,NA
+"bacterial dysentery",15,19,"cfr",0.44,NA,NA
+"bacterial dysentery",20,29,"cfr",0.44,NA,NA
+"bacterial dysentery",30,39,"cfr",0.44,NA,NA
+"bacterial dysentery",40,49,"cfr",0.44,NA,NA
+"bacterial dysentery",50,59,"cfr",0.44,NA,NA
+"bacterial dysentery",60,69,"cfr",0.44,NA,NA
+"bacterial dysentery",70,79,"cfr",0.44,NA,NA
+"bacterial dysentery",80,100,"cfr",0.44,NA,NA
+"bacterial dysentery",NA,NA,"cfr",NA,0.006,0.074
+"bacterial dysentery",NA,NA,"proportion_symptomatic",NA,0.188,0.45
+"bacterial dysentery",NA,NA,"incubation_period",NA,NA,NA
+"bacterial dysentery",NA,NA,"r0",NA,1.1,2.2
+"bacterial dysentery",NA,NA,"infectious_period",NA,NA,NA
+"bacterial dysentery",NA,NA,"infectious_period_treated",NA,NA,NA
+"cholera",0,0,"cfr",1,NA,NA
+"cholera",0.0833333333333333,0.916666666666667,"cfr",1,NA,NA
+"cholera",1,4.91666666666667,"cfr",1,NA,NA
+"cholera",5,9,"cfr",1,NA,NA
+"cholera",10,14,"cfr",1,NA,NA
+"cholera",15,19,"cfr",1,NA,NA
+"cholera",20,29,"cfr",1,NA,NA
+"cholera",30,39,"cfr",1,NA,NA
+"cholera",40,49,"cfr",1.8,NA,NA
+"cholera",50,59,"cfr",1.8,NA,NA
+"cholera",60,69,"cfr",3,NA,NA
+"cholera",70,79,"cfr",3,NA,NA
+"cholera",80,100,"cfr",3,NA,NA
+"cholera",NA,NA,"cfr",NA,0.005,0.1
+"cholera",NA,NA,"cfr_base",NA,0.003,0.005
+"cholera",NA,NA,"proportion_symptomatic",NA,0.108,0.589
+"cholera",NA,NA,"incubation_period",NA,NA,NA
+"cholera",NA,NA,"r0",NA,1.11,2.73
+"cholera",NA,NA,"r0_base",NA,0.8,1
+"cholera",NA,NA,"infectious_period",NA,NA,NA
+"cholera",NA,NA,"infectious_period_treated",NA,NA,NA
+"diphtheria",0,0,"cfr",1,NA,NA
+"diphtheria",0.0833333333333333,0.916666666666667,"cfr",1,NA,NA
+"diphtheria",1,4.91666666666667,"cfr",1,NA,NA
+"diphtheria",5,9,"cfr",0.34,NA,NA
+"diphtheria",10,14,"cfr",0.34,NA,NA
+"diphtheria",15,19,"cfr",0.34,NA,NA
+"diphtheria",20,29,"cfr",0.42,NA,NA
+"diphtheria",30,39,"cfr",0.42,NA,NA
+"diphtheria",40,49,"cfr",0.42,NA,NA
+"diphtheria",50,59,"cfr",0.42,NA,NA
+"diphtheria",60,69,"cfr",0.42,NA,NA
+"diphtheria",70,79,"cfr",0.42,NA,NA
+"diphtheria",80,100,"cfr",0.42,NA,NA
+"diphtheria",NA,NA,"cfr",NA,0.05,0.5
+"diphtheria",NA,NA,"proportion_symptomatic",NA,0.7,0.7
+"diphtheria",NA,NA,"incubation_period",NA,NA,NA
+"diphtheria",NA,NA,"r0",NA,1.7,7.1
+"diphtheria",NA,NA,"infectious_period",NA,NA,NA
+"diphtheria",NA,NA,"infectious_period_treated",NA,NA,NA
+"hepatitis A",0,0,"cfr",1,NA,NA
+"hepatitis A",0.0833333333333333,0.916666666666667,"cfr",1,NA,NA
+"hepatitis A",1,4.91666666666667,"cfr",1,NA,NA
+"hepatitis A",5,9,"cfr",1,NA,NA
+"hepatitis A",10,14,"cfr",1,NA,NA
+"hepatitis A",15,19,"cfr",1,NA,NA
+"hepatitis A",20,29,"cfr",1.35,NA,NA
+"hepatitis A",30,39,"cfr",1.35,NA,NA
+"hepatitis A",40,49,"cfr",7.89,NA,NA
+"hepatitis A",50,59,"cfr",7.89,NA,NA
+"hepatitis A",60,69,"cfr",14.88,NA,NA
+"hepatitis A",70,79,"cfr",14.88,NA,NA
+"hepatitis A",80,100,"cfr",14.88,NA,NA
+"hepatitis A",NA,NA,"cfr",NA,2e-04,0.018
+"hepatitis A",NA,NA,"proportion_symptomatic",NA,0.09,0.7
+"hepatitis A",NA,NA,"incubation_period",NA,NA,NA
+"hepatitis A",NA,NA,"r0",NA,1.1,2.7
+"hepatitis A",NA,NA,"infectious_period",NA,NA,NA
+"hepatitis A",NA,NA,"infectious_period_treated",NA,NA,NA
+"hepatitis E",0,0,"cfr",1,NA,NA
+"hepatitis E",0.0833333333333333,0.916666666666667,"cfr",1,NA,NA
+"hepatitis E",1,4.91666666666667,"cfr",1,NA,NA
+"hepatitis E",5,9,"cfr",1,NA,NA
+"hepatitis E",10,14,"cfr",1,NA,NA
+"hepatitis E",15,19,"cfr",1,NA,NA
+"hepatitis E",20,29,"cfr",1,NA,NA
+"hepatitis E",30,39,"cfr",1,NA,NA
+"hepatitis E",40,49,"cfr",1,NA,NA
+"hepatitis E",50,59,"cfr",1,NA,NA
+"hepatitis E",60,69,"cfr",1,NA,NA
+"hepatitis E",70,79,"cfr",1,NA,NA
+"hepatitis E",80,100,"cfr",1,NA,NA
+"hepatitis E",NA,NA,"cfr",NA,0.015,0.068
+"hepatitis E",NA,NA,"proportion_symptomatic",NA,0.3,0.54
+"hepatitis E",NA,NA,"incubation_period",NA,NA,NA
+"hepatitis E",NA,NA,"r0",NA,2.11,8.5
+"hepatitis E",NA,NA,"infectious_period",NA,NA,NA
+"hepatitis E",NA,NA,"infectious_period_treated",NA,NA,NA
+"measles",0,0,"cfr",1,NA,NA
+"measles",0.0833333333333333,0.916666666666667,"cfr",1,NA,NA
+"measles",1,4.91666666666667,"cfr",1,NA,NA
+"measles",5,9,"cfr",0.26,NA,NA
+"measles",10,14,"cfr",0.26,NA,NA
+"measles",15,19,"cfr",0.26,NA,NA
+"measles",20,29,"cfr",0.26,NA,NA
+"measles",30,39,"cfr",0.26,NA,NA
+"measles",40,49,"cfr",0.26,NA,NA
+"measles",50,59,"cfr",0.26,NA,NA
+"measles",60,69,"cfr",0.26,NA,NA
+"measles",70,79,"cfr",0.26,NA,NA
+"measles",80,100,"cfr",0.26,NA,NA
+"measles",NA,NA,"cfr",NA,0.001,0.1
+"measles",NA,NA,"cfr_base",NA,0.0018,0.0083
+"measles",NA,NA,"proportion_symptomatic",NA,0.75,0.96
+"measles",NA,NA,"incubation_period",NA,NA,NA
+"measles",NA,NA,"r0",NA,6,32
+"measles",NA,NA,"r0_base",NA,12.5,18
+"measles",NA,NA,"infectious_period",NA,NA,NA
+"measles",NA,NA,"infectious_period_treated",NA,NA,NA
+"meningococcal meningitis",0,0,"cfr",1,NA,NA
+"meningococcal meningitis",0.0833333333333333,0.916666666666667,"cfr",1,NA,NA
+"meningococcal meningitis",1,4.91666666666667,"cfr",1,NA,NA
+"meningococcal meningitis",5,9,"cfr",1,NA,NA
+"meningococcal meningitis",10,14,"cfr",1,NA,NA
+"meningococcal meningitis",15,19,"cfr",1,NA,NA
+"meningococcal meningitis",20,29,"cfr",1,NA,NA
+"meningococcal meningitis",30,39,"cfr",1,NA,NA
+"meningococcal meningitis",40,49,"cfr",1,NA,NA
+"meningococcal meningitis",50,59,"cfr",1,NA,NA
+"meningococcal meningitis",60,69,"cfr",1,NA,NA
+"meningococcal meningitis",70,79,"cfr",1,NA,NA
+"meningococcal meningitis",80,100,"cfr",1,NA,NA
+"meningococcal meningitis",NA,NA,"cfr",NA,0,0.5
+"meningococcal meningitis",NA,NA,"proportion_symptomatic",NA,0,0.329
+"meningococcal meningitis",NA,NA,"incubation_period",NA,NA,NA
+"meningococcal meningitis",NA,NA,"r0",NA,1.31,2.5
+"meningococcal meningitis",NA,NA,"infectious_period",NA,NA,NA
+"meningococcal meningitis",NA,NA,"infectious_period_treated",NA,NA,NA
+"pertussis",0,0,"cfr",3.7,NA,NA
+"pertussis",0.0833333333333333,0.916666666666667,"cfr",3.7,NA,NA
+"pertussis",1,4.91666666666667,"cfr",1,NA,NA
+"pertussis",5,9,"cfr",0.1,NA,NA
+"pertussis",10,14,"cfr",0.1,NA,NA
+"pertussis",15,19,"cfr",0.1,NA,NA
+"pertussis",20,29,"cfr",0.1,NA,NA
+"pertussis",30,39,"cfr",0.1,NA,NA
+"pertussis",40,49,"cfr",0.1,NA,NA
+"pertussis",50,59,"cfr",0.1,NA,NA
+"pertussis",60,69,"cfr",0.1,NA,NA
+"pertussis",70,79,"cfr",0.1,NA,NA
+"pertussis",80,100,"cfr",0.1,NA,NA
+"pertussis",NA,NA,"cfr",NA,0.007,0.15
+"pertussis",NA,NA,"proportion_symptomatic",NA,0.7,0.95
+"pertussis",NA,NA,"incubation_period",NA,NA,NA
+"pertussis",NA,NA,"r0",NA,5.5,17
+"pertussis",NA,NA,"infectious_period",NA,NA,NA
+"pertussis",NA,NA,"infectious_period_treated",NA,NA,NA
+"polio - vaccine-derived",0,0,"cfr",0.9,NA,NA
+"polio - vaccine-derived",0.0833333333333333,0.916666666666667,"cfr",0.9,NA,NA
+"polio - vaccine-derived",1,4.91666666666667,"cfr",1,NA,NA
+"polio - vaccine-derived",5,9,"cfr",2,NA,NA
+"polio - vaccine-derived",10,14,"cfr",2.2,NA,NA
+"polio - vaccine-derived",15,19,"cfr",3.6,NA,NA
+"polio - vaccine-derived",20,29,"cfr",3.6,NA,NA
+"polio - vaccine-derived",30,39,"cfr",4.7,NA,NA
+"polio - vaccine-derived",40,49,"cfr",4.7,NA,NA
+"polio - vaccine-derived",50,59,"cfr",4.7,NA,NA
+"polio - vaccine-derived",60,69,"cfr",4.7,NA,NA
+"polio - vaccine-derived",70,79,"cfr",4.7,NA,NA
+"polio - vaccine-derived",80,100,"cfr",4.7,NA,NA
+"polio - vaccine-derived",NA,NA,"cfr",NA,0.06,0.4
+"polio - vaccine-derived",NA,NA,"proportion_symptomatic",NA,0.004739336492891,0.02
+"polio - vaccine-derived",NA,NA,"incubation_period",NA,NA,NA
+"polio - vaccine-derived",NA,NA,"r0",NA,1.62,12
+"polio - vaccine-derived",NA,NA,"infectious_period",NA,NA,NA
+"polio - vaccine-derived",NA,NA,"infectious_period_treated",NA,NA,NA
+"polio - wildtype",0,0,"cfr",0.9,NA,NA
+"polio - wildtype",0.0833333333333333,0.916666666666667,"cfr",0.9,NA,NA
+"polio - wildtype",1,4.91666666666667,"cfr",1,NA,NA
+"polio - wildtype",5,9,"cfr",2,NA,NA
+"polio - wildtype",10,14,"cfr",2.2,NA,NA
+"polio - wildtype",15,19,"cfr",3.6,NA,NA
+"polio - wildtype",20,29,"cfr",3.6,NA,NA
+"polio - wildtype",30,39,"cfr",4.7,NA,NA
+"polio - wildtype",40,49,"cfr",4.7,NA,NA
+"polio - wildtype",50,59,"cfr",4.7,NA,NA
+"polio - wildtype",60,69,"cfr",4.7,NA,NA
+"polio - wildtype",70,79,"cfr",4.7,NA,NA
+"polio - wildtype",80,100,"cfr",4.7,NA,NA
+"polio - wildtype",NA,NA,"cfr",NA,0.06,0.4
+"polio - wildtype",NA,NA,"proportion_symptomatic",NA,0.004739336492891,0.02
+"polio - wildtype",NA,NA,"incubation_period",NA,NA,NA
+"polio - wildtype",NA,NA,"r0",NA,1.62,12
+"polio - wildtype",NA,NA,"infectious_period",NA,NA,NA
+"polio - wildtype",NA,NA,"infectious_period_treated",NA,NA,NA
+"typhoid fever",0,0,"cfr",1,NA,NA
+"typhoid fever",0.0833333333333333,0.916666666666667,"cfr",1,NA,NA
+"typhoid fever",1,4.91666666666667,"cfr",1,NA,NA
+"typhoid fever",5,9,"cfr",1,NA,NA
+"typhoid fever",10,14,"cfr",1,NA,NA
+"typhoid fever",15,19,"cfr",1,NA,NA
+"typhoid fever",20,29,"cfr",1,NA,NA
+"typhoid fever",30,39,"cfr",1,NA,NA
+"typhoid fever",40,49,"cfr",1,NA,NA
+"typhoid fever",50,59,"cfr",1,NA,NA
+"typhoid fever",60,69,"cfr",1,NA,NA
+"typhoid fever",70,79,"cfr",1,NA,NA
+"typhoid fever",80,100,"cfr",1,NA,NA
+"typhoid fever",NA,NA,"cfr",NA,0.006,0.089
+"typhoid fever",NA,NA,"proportion_symptomatic",NA,0.583,0.98
+"typhoid fever",NA,NA,"incubation_period",NA,NA,NA
+"typhoid fever",NA,NA,"r0",NA,2.8,2.8
+"typhoid fever",NA,NA,"infectious_period",NA,NA,NA
+"typhoid fever",NA,NA,"infectious_period_treated",NA,NA,NA
