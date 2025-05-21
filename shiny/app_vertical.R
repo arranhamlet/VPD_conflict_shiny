@@ -131,9 +131,8 @@ ui <- fluidPage(
   ),
   
   # Nav tabs and plots below
-  # div(style = "min-height: 90vh; margin-top: 2rem;", 
-  div(style = "margin-top: 2rem;",
-      
+  div(style = "min-height: 90vh; margin-top: 2rem;",
+
       navset_card_underline(
         nav_panel("Model Setup", plotOutput("model_plot", height = "500px") %>% withSpinner(color = "#E5E4E2")),
         nav_panel("Model Outputs",

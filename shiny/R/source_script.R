@@ -226,7 +226,7 @@ plot_one <- function(country, n, disease, r0, vertical = F) {
   
   if(vertical == T){
     total_information <- (vaccination_gg + cases_gg + demographics_gg + plot_layout(guides = "collect")) / (susceptibility_gg +
-                                                                            theme(legend.position = "right")) +
+                                                                                                              theme(legend.position = "right")) +
       guides(fill = guide_legend(ncol = 1))
   } else {
     total_information <- (vaccination_gg / cases_gg / demographics_gg) | susceptibility_gg
@@ -542,7 +542,7 @@ summary_stats <- function(combo){
   
   susceptibility_data_all <- subset(combo, 
                                     # time %in% c(1, max(time)) & 
-                                      state %in% c("S", "E", "I", "R", "Is", "Rc") &
+                                    state %in% c("S", "E", "I", "R", "Is", "Rc") &
                                       age != "All") %>%
     mutate(
       status = case_when(
@@ -581,8 +581,8 @@ summary_stats <- function(combo){
   #Calculate susceptibility
   new_cases_go <- combo %>%
     subset(age == "All" & state == "new_case") %>%
-    fgroup_by(time, version) %>%
-    fsummarise(
+    group_by(time, version) %>%
+    summarise(
       value_min = get_95CI(x = value, type = "low"),
       value_max = get_95CI(x = value, type = "high"),
       value = median(value)
