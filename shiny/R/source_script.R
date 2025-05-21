@@ -258,7 +258,7 @@ generate_model_data <- function(country, n, disease, r0, user_df){
     # and for intervention
     if (update_vacc) {
       for (i in seq_along(user_df$Vaccination.coverage)) {
-        new_vaccination[, 1:3, 1, i] <- pars$vaccination_coverage[, 1:3, 1, 1]  * user_df$Vaccination.coverage[i]
+        new_vaccination[, 1:3, 1, i] <- pars$vaccination_coverage[, 1:3, 1, 1]  * (user_df$Vaccination.coverage[i]/100)
       }
     }
     
