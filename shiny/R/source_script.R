@@ -9,6 +9,24 @@ library(shinyWidgets)
 library(later)
 library(shinydashboard)
 
+#Load packages
+pacman::p_load(
+  odin2,
+  rio,
+  here,
+  dust2,
+  tidyverse,
+  reshape2,
+  collapse,
+  janitor,
+  ggpubr,
+  patchwork,
+  squire.page,
+  patchwork,
+  data.table,
+  ggthemr
+)
+
 ## Setup and Gather Data ------------
 options(scipen = 999)
 population_all <- import("data/processed/WPP/age_both.csv")

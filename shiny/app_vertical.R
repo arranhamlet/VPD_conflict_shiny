@@ -125,7 +125,7 @@ ui <- fluidPage(
              )
            )
     ),
-    column(4, style = "padding-left: 10px;", DTOutput("input_coverage_table"))
+    column(6, style = "padding-left: 10px;", DTOutput("input_coverage_table"))
   ),
   
   # Nav tabs and plots below
