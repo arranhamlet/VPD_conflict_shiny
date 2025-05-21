@@ -63,7 +63,6 @@ create_sidebar_panel <- function() {
   )
 }
 
-
 ui <- fluidPage(
   # theme = jameel_theme,
   theme = bs_theme(present = "litera"),
@@ -216,7 +215,7 @@ server <- function(input, output, session) {
       escape = FALSE  # needed to allow <br> in colnames
     )
   }, server = FALSE)
-  
+
   observeEvent(input$input_coverage_table_cell_edit, {
     info <- input$input_coverage_table_cell_edit
     i <- info$row
@@ -282,7 +281,7 @@ server <- function(input, output, session) {
       diseases_of_interest$disease == selected_disease
     ]
     
-    sliderInput("r0", "Basic reproductive number (R0)", value = default_r0, min = min_r0, max = max_r0)
+    numericInput("r0", "Basic reproductive number (R0)", value = default_r0, min = min_r0, max = max_r0)
   })
   
   ## PLOT Scaling
@@ -337,17 +336,22 @@ server <- function(input, output, session) {
   
   ## PLOT 2-----------------------------------------------------
   # Observe the button click to trigger the plot generation
-  plot_results <- eventReactive(input$run_model, {
+  model_data <- eventReactive(input$run_model, {
+    df <- current_data()
     
-    df <- current_data()  # get current user-edited table
+    generate_model_data(
+      country = input$country,
+      n = input$popsize,
+      disease = input$disease,
+      r0 = input$r0,
+      user_df = df
+    )
     
-    # Call your custom function and generate plot based on inputs
-    plot_two(country = input$country,
-             n = input$popsize,
-             disease = input$disease,
-             r0 = input$r0,
-             user_df = df)
-    
+  })
+  
+  plot_results <- reactive({
+    req(model_data())  # Wait until model_data is available
+    plot_two(model_data())
   })
   
   output$results_plot <- renderPlot({

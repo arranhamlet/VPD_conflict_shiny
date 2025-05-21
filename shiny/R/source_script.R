@@ -6,6 +6,7 @@ library(bslib)
 library(DT)
 library(shinycssloaders)
 library(shinyWidgets)
+library(later)
 #Load packages
 pacman::p_load(
   odin2,
@@ -74,7 +75,7 @@ invisible(sapply(list.files(
 
 #Import model
 model <- odin2::odin("model/stochastic_model_v1.R")
- 
+
 # Plot 1 ----------------------
 
 # Poster Plot 1 on Demographics and susceptibility ---------
@@ -115,7 +116,7 @@ plot_one <- function(country, n, disease, r0) {
         "Vaccine and exposure protected"
       )
     ))
-
+  
   ## Plotting ----------------
   ggthemr::ggthemr("fresh", text_size = 18)
   
@@ -133,7 +134,7 @@ plot_one <- function(country, n, disease, r0) {
       axis.title = element_text(size = 18),
       axis.line = element_line(color = "black")
     )
-
+  
   cases_gg <- ggplot(
     data = full_disease_df %>%
       subset(iso3 == iso3c & disease_description == disease),
@@ -220,17 +221,13 @@ plot_one <- function(country, n, disease, r0) {
 
 
 # Plot 2 -----------------------------
-
-plot_two <- function(country, n, disease, r0, user_df) {
-
+generate_model_data <- function(country, n, disease, r0, user_df){
   # get the iso3c and disease match
   iso3c <- countrycode::countrycode(country, "country.name.en", "iso3c")
   dis_match <- c("diphtheria", "measles", "pertussis")[match(disease, c("Diphtheria", "Measles", "Pertussis"))]
   
   # Pull starting parameters
-  print(which(names(all_Rdata_loaded) == paste(c(iso3c, dis_match, r0), collapse = "_")))
   param_use <- all_Rdata_loaded[[which(names(all_Rdata_loaded) == paste(c(iso3c, dis_match, r0), collapse = "_"))]]
-  
   
   # Create our params for the simulation
   generate_params <- function(param_use, user_df, years, update_vacc = FALSE){
@@ -304,14 +301,20 @@ plot_two <- function(country, n, disease, r0, user_df) {
   # combine models
   combo <- rbind(model_no_change, model_change)
   
+  combo
+  
+}
+
+plot_two <- function(combo) {
+  
   #Calculate susceptibility
   new_cases_go <- combo %>%
     subset(age == "All" & state == "new_case") %>%
-    fgroup_by(time, version) %>%
-    fsummarise(
-      value = median(value),
+    group_by(time, version) %>%
+    summarise(
       value_min = get_95CI(x = value, type = "low"),
-      value_max = get_95CI(x = value, type = "high")
+      value_max = get_95CI(x = value, type = "high"),
+      value = median(value)
     ) %>%
     mutate(value_min = pmax(value_min, 0))
   
@@ -323,12 +326,6 @@ plot_two <- function(country, n, disease, r0, user_df) {
     summarise(value = sum(value)) %>%
     mutate(over_100 = value > 100)
   
-  sum_stats_outbreak_over_100 <- sum_stats %>%
-    group_by(version) %>%
-    summarise(n = n(), over_100 = sum(over_100)) %>%
-    mutate(less_than_100 = n - over_100,
-           prop_diff = less_than_100 / min(less_than_100))
-  
   sum_stats_size <- sum_stats %>%
     group_by(version) %>%
     summarise(
@@ -336,7 +333,9 @@ plot_two <- function(country, n, disease, r0, user_df) {
       value_max = pmax(get_95CI(x = value, type = "high"), 0),
       value = mean(value),
     )
-
+  
+  print(1)
+  
   # Create Case Plot
   ggthemr::ggthemr("fresh", text_size = 18)
   case_diff <- ggplot(
@@ -368,8 +367,9 @@ plot_two <- function(country, n, disease, r0, user_df) {
   
   # And get the outbreak plot
   new_cases_go$year  <- as.Date((
-    as.Date("2024-01-01") + lubridate::dyears(new_cases_go$t / 365)
+    as.Date("2024-01-01") + lubridate::dyears(new_cases_go$time / 365)
   ))
+  
   # setting to these names as clearer
   new_cases_go$version <- recode(new_cases_go$version,
                                  "No change" = "Pre-Conflict Vaccination Coverage",
@@ -419,7 +419,7 @@ plot_two <- function(country, n, disease, r0, user_df) {
     inset_element(case_diff, 0.625, 0.4, .99, .9)
   
   # Poster Plot 2a on Declines ---------
-  
+  print(2)
   susceptibility_data_all <- subset(combo, state %in% c("S", "E", "I", "R", "Is", "Rc") &
                                       age != "All") %>%
     mutate(
@@ -448,7 +448,7 @@ plot_two <- function(country, n, disease, r0, user_df) {
       coverage = value / sum(value, na.rm = T),
       coverage = case_when(is.nan(coverage) ~ 0, !is.nan(coverage) ~ coverage)
     )
-  
+  print(3)
   #Plot
   vac_protect_all <- susceptibility_data_all %>%
     mutate(status_simple = case_when(
@@ -513,5 +513,76 @@ plot_two <- function(country, n, disease, r0, user_df) {
   total_outbreaks <- p1 + p2 + plot_layout(widths = c(1, 1.4))
   
   return(total_outbreaks)
+  
+}
+
+summary_stats <- function(combo){
+  
+  susceptibility_data_all <- subset(combo, 
+                                    time %in% c(1, max(time)) & 
+                                      state %in% c("S", "E", "I", "R", "Is", "Rc") &
+                                      age != "All") %>%
+    mutate(
+      status = case_when(
+        state == "S" & vaccination == 1 ~ "No vaccine",
+        state == "S" & vaccination > 1 ~ "Vaccine protected",
+        state %in% c("S", "E", "I", "R", "Is", "Rc") &
+          vaccination == 1 ~ "No vaccine",
+        state %in% c("S", "E", "I", "R", "Is", "Rc") &
+          vaccination > 1 ~ "Vaccine protected"
+      ),
+      status = factor(
+        status,
+        levels = c(
+          "Vaccine protected",
+          "No vaccine"
+        )
+      )
+    ) %>%
+    group_by(time, version, status) %>%
+    summarise(value = sum(value)) %>%
+    group_by(time, version) %>%
+    mutate(
+      coverage = value / sum(value, na.rm = T),
+      coverage = case_when(is.nan(coverage) ~ 0, !is.nan(coverage) ~ coverage)
+    )
+  
+  diff <- subset(susceptibility_data_all, version %in% c("Reduction in coverage") & status == "Vaccine protected")
+  diff_percent <- round(subset(diff, time == min(time)) %>% pull(coverage) - subset(diff, time == max(time)) %>% pull(coverage) * 100, 1)
+  
+  direction <- ifelse(diff_percent >= 0, "increase", "decrease")
+  
+  button_one <- paste0(
+    abs(diff_percent), "% ", direction, " in the\npopulation protected by vaccination."
+  )
+  
+  #Calculate susceptibility
+  new_cases_go <- combo %>%
+    subset(age == "All" & state == "new_case") %>%
+    group_by(time, version) %>%
+    summarise(
+      value = median(value),
+      value_min = get_95CI(x = value, type = "low"),
+      value_max = get_95CI(x = value, type = "high")
+    ) %>%
+    mutate(value_min = pmax(value_min, 0)) %>%
+    group_by(version) %>%
+    summarise(
+      value = sum(value),
+      value_min = sum(value_min),
+      value_max = sum(value_max)
+    )
+  
+  reduction <- subset(new_cases_go, version == "Reduction in coverage")
+  status_quo <- subset(new_cases_go, version == "No change")
+  direction <- ifelse(reduction$value >= status_quo$value, "increase", "decrease")
+  
+  button_two <- paste0(round(reduction$value/status_quo$value * 100, 1), 
+                       "% (95% CI ", round(reduction$value_min/status_quo$value_min * 100, 1),
+                       "-", round(reduction$value_max/status_quo$value_max * 100, 1), 
+                       " )\n", direction, " in cases.")
+  
+  c(button_one,
+    button_two)
   
 }
