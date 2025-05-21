@@ -39,11 +39,6 @@ diseases_of_interest <- data.frame(
   max_R0 = c(7, 18, 15)
 )
 
-# Plot 1 ----------------------
-
-# Poster Plot 1 on Demographics and susceptibility ---------
-
-
 ## Setup and Gather Data ------------
 options(scipen = 999)
 population_all <- import("data/processed/WPP/age_both.csv")
@@ -59,6 +54,10 @@ invisible(sapply(list.files(
 
 #Import model
 model <- odin2::odin("model/stochastic_model_v1.R")
+
+# Plot 1 ----------------------
+
+# Poster Plot 1 on Demographics and susceptibility ---------
 
 plot_one <- function(country, n, disease, r0) {
   iso3c <- countrycode::countrycode(country, "country.name.en", "iso3c")
@@ -164,7 +163,7 @@ plot_one <- function(country, n, disease, r0) {
     mapping = aes(x = year, y = coverage, color = antigen_description)
   ) +
     geom_line(lwd = 1.5) +
-    guides(color = guide_legend(nrow = 1, title = "")) +
+    guides(color = guide_legend(nrow = 2, title = "")) +
     labs(x = "Year", y = "WHO Reported Annual \nVaccination Coverage (%)") +
     theme(legend.position = "top", ) +
     coord_cartesian(ylim = c(0, 100)) +
@@ -210,11 +209,7 @@ plot_one <- function(country, n, disease, r0) {
     scale_fill_manual(values = protection_cols)
   
   
-  patch <- demographics_gg / cases_gg / vaccination_gg
-  total_information <- ggarrange(patch,
-                                 susceptibility_gg,
-                                 ncol = 2,
-                                 widths = c(1, 1))
+  total_information <- (vaccination_gg / cases_gg / demographics_gg) | susceptibility_gg
   
   return(total_information)
   
@@ -224,7 +219,7 @@ plot_one <- function(country, n, disease, r0) {
 # Plot 2 -----------------------------
 
 plot_two <- function(country, n, disease, r0, user_df) {
-  
+
   # get the iso3c and disease match
   iso3c <- countrycode::countrycode(country, "country.name.en", "iso3c")
   dis_match <- c("diphtheria", "measles", "pertussis")[match(disease, c("Diphtheria", "Measles", "Pertussis"))]
@@ -240,56 +235,62 @@ plot_two <- function(country, n, disease, r0, user_df) {
     ".rds"
   ))
   
-  # Create our params
-  n_runs <- 3
-  years <- nrow(user_df)
-  
-  generate_new_params <- sapply(c(1, 2), function(x) {
+  # Create our params for the simulation
+  generate_params <- function(param_use, user_df, years, update_vacc = FALSE){
+    
+    pars <- param_use
+    
     # create fwd vaccination
-    new_vaccination <-
-      abind::abind(replicate(years, param_use$vaccination_coverage, simplify = FALSE),
-                   along = 4)
+    new_vaccination <- abind::abind(replicate(years, pars$vaccination_coverage, simplify = FALSE),
+                                    along = 4)
     
     # and for intervention
-    if (x == 2) {
+    if (update_vacc) {
       for (i in seq_along(user_df$Vaccination.coverage)) {
-        new_vaccination[, 1:3, 1, i] <- param_use$vaccination_coverage[, 1:3, 1, i]  * user_df$Vaccination.coverage[i]
+        new_vaccination[, 1:3, 1, i] <- pars$vaccination_coverage[, 1:3, 1, 1]  * user_df$Vaccination.coverage[i]
       }
     }
     
     # update our parameters
-    param_use$vaccination_coverage <- new_vaccination
-    param_use$tt_vaccination_coverage <- seq(0, by = 365, length.out = years)
-    param_use$no_vacc_changes <- length(param_use$tt_vaccination_coverage)
+    pars$vaccination_coverage <- new_vaccination
+    pars$tt_vaccination_coverage <- seq(0, by = 365, length.out = years)
+    pars$no_vacc_changes <- length(pars$tt_vaccination_coverage)
     
     # create fwd seeds
-    new_seeded <- abind::abind(replicate(years, param_use$seeded, simplify = FALSE),
-                               along = 4)
+    new_seeded <- abind::abind(replicate(years, pars$seeded, simplify = FALSE), along = 4)
     for (i in seq_along(user_df$seed)) {
       new_seeded[18, 1, 1, i] <- user_df$seed[i]
     }
     
     # update seed parameters
-    param_use$tt_seeded <- param_use$tt_seeded <- seq(0, by = 365, length.out = years)
-    param_use$seeded <- new_seeded
-    param_use$no_seeded_changes <- length(param_use$tt_seeded)
+    pars$tt_seeded <- pars$tt_seeded <- seq(0, by = 365, length.out = years)
+    pars$seeded <- new_seeded
+    pars$no_seeded_changes <- length(pars$tt_seeded)
     
     # create our total population
-    total_pop <- sum(param_use$S0 + param_use$I0 + param_use$Rpop0)
+    total_pop <- sum(pars$S0 + pars$I0 + pars$Rpop0)
     scaler <- n / total_pop
-    param_use$S0 <- param_use$S0 * scaler
-    param_use$I0 <- param_use$I0 * scaler
-    param_use$Rpop0 <- param_use$Rpop0 * scaler
+    pars$S0 <- pars$S0 * scaler
+    pars$I0 <- pars$I0 * scaler
+    pars$Rpop0 <- pars$Rpop0 * scaler
     
     # return parameters
-    return(param_use)
+    return(pars)
     
-  }, simplify = FALSE)
+  }
+  
+  # Run number and length
+  n_runs <- 3
+  years <- nrow(user_df)
+  
+  # parameters for simulations
+  no_change_params <- generate_params(param_use, user_df, years, FALSE)
+  user_params <- generate_params(param_use, user_df, years, TRUE)
   
   #Run model
   model_no_change <- run_model(
     odin_model = model,
-    params = generate_new_params[[1]],
+    params = no_change_params,
     time = 365 * years,
     no_runs = n_runs
   )
@@ -297,7 +298,7 @@ plot_two <- function(country, n, disease, r0, user_df) {
   
   model_change <- run_model(
     odin_model = model,
-    params = generate_new_params[[2]],
+    params = user_params,
     time = 365 * years,
     no_runs = n_runs
   )

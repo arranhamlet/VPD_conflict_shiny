@@ -37,6 +37,32 @@ jameel_theme <- bs_add_rules(jameel_theme, "
   }
 ")
 
+# create one uniqu sidebar panel here first:
+# Sidebar
+create_sidebar_panel <- function() {
+  div(
+    class = "sidebar-custom p-3 bg-light border rounded",
+    style = "display: flex; flex-direction: column; height: auto;",
+    
+    selectInput("country", "Country", selected = "Palestine", choices = countries$name),
+    uiOutput("pop_input"),
+    selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"),
+    uiOutput("r0_input"),
+    
+    sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
+    
+    h4("Future events"),
+    div(
+      style = "display: flex; flex-direction: column;",
+      DTOutput("input_coverage_table"),
+      div(style = "margin-top: 15px;"),
+      actionButton("run_model", "Run simulations",
+                   icon("play"), 
+                   style = "color: #fff; background-color: #ab1940; border-color: #021c35")
+    )
+  )
+}
+
 
 ui <- fluidPage(
   # theme = jameel_theme,
@@ -44,46 +70,67 @@ ui <- fluidPage(
   # Custom styling for sidebar + DataTable scroll
   tags$head(
     tags$style(HTML("
-    .sidebar-custom {
-      font-size: 0.85rem;
-    }
-    .sidebar-custom .form-control,
-    .sidebar-custom .selectize-input {
-      font-size: 0.85rem;
-    }
-    .sidebar-custom h4 {
-      font-size: 1rem;
-      margin-top: 1rem;
-    }
-    .dataTables_wrapper {
-      width: 100% !important;
-    }
-    .dataTables_scrollBody {
-      max-height: 200px !important;
-      overflow-y: auto !important;
-    }
-    .dt-head-wrap {
-      white-space: normal !important;
-      word-wrap: break-word;
-    }
-    #sidebar-panel {
-      resize: horizontal;
-      overflow: auto;
-      min-width: 200px;
-      max-width: 500px;
-    }
-  ")),
+      .sidebar-custom {
+        font-size: 0.85rem;
+        min-width: 215px;  /* Add this to enforce minimum sidebar width */
+      }
+      .sidebar-custom .form-control,
+      .sidebar-custom .selectize-input {
+        font-size: 0.85rem;
+      }
+      .sidebar-custom h4 {
+        font-size: 1rem;
+        margin-top: 1rem;
+      }
+      .dataTables_wrapper {
+        width: 100% !important;
+      }
+      .dataTables_scrollBody {
+        max-height: 200px !important;
+        overflow-y: auto !important;
+      }
+      .dt-head-wrap {
+        white-space: normal !important;
+        word-wrap: break-word;
+      }
+      #sidebar-panel {
+        resize: horizontal;
+        overflow: auto;
+        min-width: 215px;
+        max-width: 500px;
+      }")),
     tags$script('
-      var dimension = [0, 0];
       $(document).on("shiny:connected", function(e) {
-        dimension[0] = window.innerWidth;
-        dimension[1] = window.innerHeight;
-        Shiny.onInputChange("dimension", dimension);
-      });
-      $(window).resize(function(e) {
-        dimension[0] = window.innerWidth;
-        dimension[1] = window.innerHeight;
-        Shiny.onInputChange("dimension", dimension);
+        function updateDimensions() {
+          // Get the element by its selector
+          const element = document.querySelector(".card.bslib-card.bslib-mb-spacing.html-fill-item.html-fill-container");
+
+          if (element) {
+            const elementRect = element.getBoundingClientRect();
+            const elementWidth = elementRect.width;
+            const elementHeight = elementRect.height;
+            const windowHeight = window.innerHeight;
+
+            // Calculate 80% of window height
+            const eightyPercentWindowHeight = windowHeight * 0.85;
+
+            // Determine the minimum height
+            const calculatedHeight = Math.min(elementHeight, eightyPercentWindowHeight);
+
+            // Send the dimensions to Shiny
+            Shiny.setInputValue("dimension", [elementWidth, calculatedHeight]);
+          } else {
+            console.error("Element not found with the specified selector.");
+          }
+        }
+
+        // Initial dimension setting
+        updateDimensions();
+
+        // Resize listener safely set after shiny:connected
+        $(window).on("resize", function() {
+          updateDimensions();
+        });
       });')
   ),
   div(
@@ -100,84 +147,13 @@ ui <- fluidPage(
     img(src = "imperial_ji_logo.png", height = "50px")
   ),
   
-  navset_card_underline(
-    
-    nav_panel("Model Setup",
-              layout_columns(
-                col_widths = c(2, 10),
-                
-                # Sidebar
-                div(
-                  id = "sidebar-panel1",
-                  class = "sidebar-custom p-3 bg-light border rounded",
-                  style = "display: flex; flex-direction: column; height: auto;",
-                  
-                  selectInput("country", "Country", selected = "Palestine", choices = countries$name),
-                  uiOutput("pop_input"),
-                  selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"),
-                  uiOutput("r0_input"),
-                  
-                  sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
-                  
-                  h4("Future events"),
-                  div(
-                    style = "display: flex; flex-direction: column;",
-                    DTOutput("input_coverage_table"),
-                    div(style = "margin-top: 15px;"),
-                    actionButton("run_model", "Run simulations",
-                                 icon("play"), 
-                                 style = "color: #fff; background-color: #ab1940; border-color: #021c35")
-                  )
-                  
-                ),
-                
-                # Main content
-                div(
-                  class = "p-3",
-                  plotOutput("model_plot") %>% withSpinner(color = "#E5E4E2")
-                )
-              )
-    ),
-    
-    nav_panel("Model outputs",
-              layout_columns(
-                col_widths = c(2, 10),
-                
-                # Sidebar
-                div(
-                  id = "sidebar-panel",
-                  class = "sidebar-custom p-3 bg-light border rounded",
-                  style = "display: flex; flex-direction: column; height: auto;",
-                  
-                  selectInput("country", "Country", selected = "Palestine", choices = countries$name),
-                  uiOutput("pop_input"),
-                  selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"),
-                  uiOutput("r0_input"),
-                  
-                  sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
-                  
-                  h4("Future events"),
-                  div(
-                    style = "display: flex; flex-direction: column;",
-                    DTOutput("input_coverage_table"),
-                    div(style = "margin-top: 15px;"),
-                    actionButton("run_model", "Run simulations",
-                                 icon("play"), 
-                                 style = "color: #fff; background-color: #ab1940; border-color: #021c35")
-                  )
-                  
-                ),
-                
-                # Main content
-                div(
-                  class = "p-3",
-                  plotOutput("results_plot") %>% withSpinner(color = "#E5E4E2")
-                )
-              )
-    ),
-    
-    nav_panel("About",
-              uiOutput("ui_overview")
+  layout_columns(
+    col_widths = c(2,10),
+    create_sidebar_panel(),
+    navset_card_underline(
+      nav_panel("Model Setup", plotOutput("model_plot") %>% withSpinner(color = "#E5E4E2")),
+      nav_panel("Model Outputs", plotOutput("results_plot") %>% withSpinner(color = "#E5E4E2")),
+      nav_panel("About", uiOutput("ui_overview"))
     ),
     
   )
@@ -292,6 +268,19 @@ server <- function(input, output, session) {
     numericInput("r0", "Basic reproductive number (R0)", value = default_r0, max = max_r0)
   })
   
+  ## PLOT Scaling
+  dimension_debounced <- debounce(reactive(input$dimension), 2000)
+  
+  # Calculate your scaling factor
+  plot_scale <- reactive({
+    req(input$dimension)
+    req(dimension_debounced())
+    width <- dimension_debounced()[1]
+    ideal_width <- 1500
+    scale <- min(max(width / ideal_width, 0.6), 1.2)
+    return(scale)
+  })
+  
   ## PLOT 1 -----------------------------------------------------
   # Observe the button click to trigger the plot generation
   plot_output <- eventReactive(input$run_model, {
@@ -305,15 +294,28 @@ server <- function(input, output, session) {
   })
   
   output$model_plot <- renderPlot({
-    plot_output()
+    basepl <- plot_output()
+    scale_factor <- plot_scale()
+    
+    adjusted_plot <- basepl & theme(
+      text = element_text(size = 18 * scale_factor, family = "Helvetica"),
+      axis.title = element_text(size = 18 * scale_factor),
+      axis.text = element_text(size = 14 * scale_factor),
+      legend.text = element_text(size = 16 * scale_factor),
+      plot.title = element_text(size = 20 * scale_factor)
+    )
+    
+    adjusted_plot
   }, 
   height = function() {
     req(input$dimension)
-    0.7 * as.numeric(input$dimension[2])
+    req(dimension_debounced())
+    0.9 * dimension_debounced()[2]
   },
   width = function() {
-    req(input$dimension)
-    0.9 * as.numeric(input$dimension[1])
+    req(input$dimension)    
+    req(dimension_debounced())
+    0.95 * dimension_debounced()[1]
   })
   
   ## PLOT 2-----------------------------------------------------
@@ -332,16 +334,33 @@ server <- function(input, output, session) {
   })
   
   output$results_plot <- renderPlot({
-    plot_results()
+    basepl2 <- plot_results()
+    scale_factor <- plot_scale()
+    
+    adjusted_plot2 <- basepl2 & theme(
+      text = element_text(size = 18 * scale_factor, family = "Helvetica"),
+      axis.title = element_text(size = 18 * scale_factor),
+      axis.text = element_text(size = 14 * scale_factor),
+      legend.text = element_text(size = 16 * scale_factor),
+      plot.title = element_text(size = 20 * scale_factor)
+    )
+    
+    adjusted_plot2
   }, 
   height = function() {
     req(input$dimension)
-    0.7 * as.numeric(input$dimension[2])
+    req(dimension_debounced())
+    0.9 * dimension_debounced()[2]
   },
   width = function() {
-    req(input$dimension)
-    0.9 * as.numeric(input$dimension[1])
+    req(input$dimension)    
+    req(dimension_debounced())
+    0.95 * dimension_debounced()[1]
   })
+  
+  # make sure these run in the background in case the user is on the other tab
+  outputOptions(output, "results_plot", suspendWhenHidden = FALSE)
+  outputOptions(output, "model_plot", suspendWhenHidden = FALSE, priority = 1)
   
   ## ABOUT -----------------------------------------------------
   
