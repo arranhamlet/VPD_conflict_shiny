@@ -222,23 +222,24 @@ server <- function(input, output, session) {
     i <- info$row
     j <- info$col + 1  # DT is 0-indexed, R is 1-indexed
     v <- suppressWarnings(as.numeric(info$value))
-    
+
     if (!is.na(v)) {
       df <- current_data()
-      
+
       # Column 2: seed (no upper bound)
       if (j == 2 && v >= 0) {
         df[i, j] <- v
       }
-      
+
       # Column 3: vaccination coverage (0–100%)
       if (j == 3 && v >= 0 && v <= 100) {
         df[i, j] <- v
       }
-      
+
       current_data(df)
     }
   })
+  
   
   ## REACTIVE UI INPUTS -----------------------------------------------------
   output$pop_input <- renderUI({
@@ -264,8 +265,11 @@ server <- function(input, output, session) {
     max_r0 <- diseases_of_interest$max_R0[
       diseases_of_interest$disease == selected_disease
     ]
+    min_r0 <- diseases_of_interest$min_R0[
+      diseases_of_interest$disease == selected_disease
+    ]
     
-    numericInput("r0", "Basic reproductive number (R0)", value = default_r0, max = max_r0)
+    sliderInput("r0", "Basic reproductive number (R0)", value = default_r0, min = min_r0, max = max_r0)
   })
   
   ## PLOT Scaling

@@ -5,6 +5,7 @@ library(dust2)
 library(bslib)
 library(DT)
 library(shinycssloaders)
+library(shinyWidgets)
 #Load packages
 pacman::p_load(
   odin2,
@@ -36,12 +37,31 @@ countries <- data.frame(
 diseases_of_interest <- data.frame(
   disease = c("Diphtheria", "Measles", "Pertussis"),
   default_R0 = c(3, 15, 8), 
-  max_R0 = c(7, 18, 15)
+  max_R0 = c(7, 18, 15),
+  min_R0 = c(1, 12, 9)
 )
 
 ## Setup and Gather Data ------------
 options(scipen = 999)
 population_all <- import("data/processed/WPP/age_both.csv")
+routine_vaccination_data <- import("data/coverage-data_updated.xlsx")
+prior_cases <- import("output/model_run/MSF/processed/full_cases.csv")
+starting_immunity <- import("output/model_run/MSF/processed/susceptibility.csv")
+
+# Case plot
+full_disease_df <- import("data/processed/WHO/reported_cases_data.csv")
+
+#Rdata files
+all_Rdata <- list.files("output/model_run/MSF/processed/",
+                        pattern = ".rds",
+                        full.names = T)
+all_Rdata_names <- sapply(strsplit(all_Rdata, "/"), function(e)
+  gsub(".rds", "", last(e)))
+all_Rdata_loaded <- sapply(all_Rdata, function(x)
+  import(x), simplify = FALSE)
+names(all_Rdata_loaded) <- all_Rdata_names
+
+
 
 #Import functions
 invisible(sapply(list.files(
@@ -64,7 +84,6 @@ plot_one <- function(country, n, disease, r0) {
   dis_match <- c("diphtheria", "measles", "pertussis")[match(disease, c("Diphtheria", "Measles", "Pertussis"))]
   
   #UN demographics
-  population_all <- import("data/processed/WPP/age_both.csv")
   population <- subset(population_all, iso3 == iso3c) %>%
     select(x0:x100) %>%
     tail(1) %>%
@@ -74,7 +93,6 @@ plot_one <- function(country, n, disease, r0) {
            population = population / sum(population) * n)
   
   #Prior vaccination coverage
-  routine_vaccination_data <- import("data/coverage-data_updated.xlsx")
   routine_subset <- routine_vaccination_data %>%
     subset(
       CODE == iso3c &
@@ -85,10 +103,8 @@ plot_one <- function(country, n, disease, r0) {
     select(code, name, year, antigen_description, coverage)
   
   #Full case data
-  prior_cases <- import("output/model_run/MSF/processed/full_cases.csv")
   
   #Full starting immunity
-  starting_immunity <- import("output/model_run/MSF/processed/susceptibility.csv")
   starting_immunity <- starting_immunity %>%
     mutate(status = factor(
       status,
@@ -99,17 +115,7 @@ plot_one <- function(country, n, disease, r0) {
         "Vaccine and exposure protected"
       )
     ))
-  
-  #Rdata files
-  all_Rdata <- list.files("output/model_run/MSF/processed/",
-                          pattern = ".rds",
-                          full.names = T)
-  all_Rdata_names <- sapply(strsplit(all_Rdata, "/"), function(e)
-    gsub(".rds", "", last(e)))
-  all_Rdata_loaded <- sapply(all_Rdata, function(x)
-    import(x), simplify = FALSE)
-  names(all_Rdata_loaded) <- all_Rdata_names
-  
+
   ## Plotting ----------------
   ggthemr::ggthemr("fresh", text_size = 18)
   
@@ -127,10 +133,7 @@ plot_one <- function(country, n, disease, r0) {
       axis.title = element_text(size = 18),
       axis.line = element_line(color = "black")
     )
-  
-  # Case plot
-  full_disease_df <- import("data/processed/WHO/reported_cases_data.csv")
-  
+
   cases_gg <- ggplot(
     data = full_disease_df %>%
       subset(iso3 == iso3c & disease_description == disease),
@@ -225,15 +228,9 @@ plot_two <- function(country, n, disease, r0, user_df) {
   dis_match <- c("diphtheria", "measles", "pertussis")[match(disease, c("Diphtheria", "Measles", "Pertussis"))]
   
   # Pull starting parameters
-  param_use <- import(paste0(
-    "output/model_run/MSF/processed/",
-    iso3c,
-    "_",
-    dis_match,
-    "_",
-    r0,
-    ".rds"
-  ))
+  print(which(names(all_Rdata_loaded) == paste(c(iso3c, dis_match, r0), collapse = "_")))
+  param_use <- all_Rdata_loaded[[which(names(all_Rdata_loaded) == paste(c(iso3c, dis_match, r0), collapse = "_"))]]
+  
   
   # Create our params for the simulation
   generate_params <- function(param_use, user_df, years, update_vacc = FALSE){
@@ -339,11 +336,7 @@ plot_two <- function(country, n, disease, r0, user_df) {
       value_max = pmax(get_95CI(x = value, type = "high"), 0),
       value = mean(value),
     )
-  
-  # paste(max(sum_stats_size$value)/min(sum_stats_size$value),
-  #       max(sum_stats_size$value_min)/min(sum_stats_size$value_min),
-  #       max(sum_stats_size$value_max)/min(sum_stats_size$value_max))
-  
+
   # Create Case Plot
   ggthemr::ggthemr("fresh", text_size = 18)
   case_diff <- ggplot(
