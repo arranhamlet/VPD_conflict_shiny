@@ -71,7 +71,7 @@ JICVP is developed by the Jameel Institute at Imperial College London, with cont
 
 This project is supported by [Community Jameel](https://www.communityjameel.org/) as part of the Jameel Institute – Realtime Intelligent Support for Emergencies (JI-RISE) initiative
 
-<img src="www/jameel-community-logo.png">
+![Community Jameel](www/jameel_community_logo.png)
 
 # **Disclaimer and Licensing**
 
