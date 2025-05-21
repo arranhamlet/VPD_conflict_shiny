@@ -103,10 +103,12 @@ plot_one <- function(country, n, disease, r0, vertical = F) {
            population = population / sum(population) * n)
   
   #Prior vaccination coverage
+  if(grepl("Diphtheria|Pertussis", dis_match, ignore.case = T)) vac_disease <- paste0(disease, "|DTPCV1|DTPCV3|DTaP|DT|DTwP", collapse = "")
+  
   routine_subset <- routine_vaccination_data %>%
     subset(
       CODE == iso3c &
-        grepl(disease, ANTIGEN_DESCRIPTION, ignore.case = T) &
+        grepl(vac_disease, ANTIGEN_DESCRIPTION, ignore.case = T) &
         COVERAGE_CATEGORY == "WUENIC"
     ) %>%
     clean_names() %>%
