@@ -1,12 +1,9 @@
 
-
 # Import functions and data through source script -------------------------
 
 source("R/source_script.R")
 
-
 # UI ----------------------------------------------------------------------
-
 
 # Define theme
 jameel_theme <- bs_theme(
@@ -18,7 +15,7 @@ jameel_theme <- bs_theme(
   success = "#0000ae",
   bg = "#fdfdfd",
   fg = "#021c35",
-  font_scale = 1
+  font_scale = 0.9
 )
 
 # Add @font-face CSS rules for custom fonts in /www/
@@ -38,41 +35,14 @@ jameel_theme <- bs_add_rules(jameel_theme, "
   }
 ")
 
-# create one uniqu sidebar panel here first:
-# Sidebar
-create_sidebar_panel <- function() {
-  div(
-    class = "sidebar-custom p-3 bg-light border rounded",
-    style = "display: flex; flex-direction: column; height: auto;",
-    
-    selectInput("country", "Country", selected = "Palestine", choices = countries$name),
-    uiOutput("pop_input"),
-    selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"),
-    uiOutput("r0_input"),
-    
-    sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
-    
-    h4("Future events"),
-    div(
-      style = "display: flex; flex-direction: column;",
-      DTOutput("input_coverage_table"),
-      div(style = "margin-top: 15px;"),
-      actionButton("run_model", "Run simulations",
-                   icon("play"), 
-                   style = "color: #fff; background-color: #ab1940; border-color: #021c35")
-    )
-  )
-}
-
 ui <- fluidPage(
-  # theme = jameel_theme,
-  theme = bs_theme(present = "litera"),
-  # Custom styling for sidebar + DataTable scroll
+  theme = jameel_theme,
+  
   tags$head(
     tags$style(HTML("
       .sidebar-custom {
         font-size: 0.85rem;
-        min-width: 215px;  /* Add this to enforce minimum sidebar width */
+        min-width: 215px;
       }
       .sidebar-custom .form-control,
       .sidebar-custom .selectize-input {
@@ -84,90 +54,100 @@ ui <- fluidPage(
       }
       .dataTables_wrapper {
         width: 100% !important;
+        margin-top: -10px;
       }
       .dataTables_scrollBody {
-        max-height: 200px !important;
+        max-height: 500px !important;
         overflow-y: auto !important;
       }
       .dt-head-wrap {
         white-space: normal !important;
         word-wrap: break-word;
       }
-      #sidebar-panel {
-        resize: horizontal;
-        overflow: auto;
-        min-width: 215px;
-        max-width: 500px;
-      }")),
-    tags$script('
-      $(document).on("shiny:connected", function(e) {
+      .dataTables_wrapper table.dataTable td:nth-child(3),
+      .dataTables_wrapper table.dataTable th:nth-child(3) {
+        max-width: 120px !important;
+        white-space: nowrap;
+      }
+    ")),
+    tags$script('$(document).on("shiny:connected", function(e) {
         function updateDimensions() {
-          // Get the element by its selector
           const element = document.querySelector(".card.bslib-card.bslib-mb-spacing.html-fill-item.html-fill-container");
-
           if (element) {
             const elementRect = element.getBoundingClientRect();
             const elementWidth = elementRect.width;
             const elementHeight = elementRect.height;
             const windowHeight = window.innerHeight;
-
-            // Calculate 80% of window height
             const eightyPercentWindowHeight = windowHeight * 0.85;
-
-            // Determine the minimum height
             const calculatedHeight = Math.min(elementHeight, eightyPercentWindowHeight);
-
-            // Send the dimensions to Shiny
             Shiny.setInputValue("dimension", [elementWidth, calculatedHeight]);
-          } else {
-            console.error("Element not found with the specified selector.");
           }
         }
-
-        // Initial dimension setting
         updateDimensions();
-
-        // Resize listener safely set after shiny:connected
         $(window).on("resize", function() {
           updateDimensions();
         });
       });')
   ),
+  
+  # Header with logo and title
   div(
     class = "d-flex align-items-center justify-content-between p-3 mb-3 border-bottom",
-    
-    # Title on left
-    div(
-      h2("Jameel Institute Crisis Vaccination Planner (JICVP)", 
-         class = "mb-0", 
-         style = "font-weight: 500; color: #0000cd; font-size: x-large;")
-    ),
-    
-    # Logo on right
-    img(src = "imperial_ji_logo.png", height = "50px")
+    div(h2("Jameel Institute Crisis Vaccination Planner (JICVP)", class = "mb-0", 
+           style = "font-weight: 500; color: #0000cd; font-size: large;")),
+    img(src = "imperial_ji_logo.png", height = "45px")
   ),
   
-  layout_columns(
-    col_widths = c(2,10),
-    create_sidebar_panel(),
-    navset_card_underline(
-      nav_panel("Model Setup", plotOutput("model_plot") %>% withSpinner(color = "#E5E4E2")),
-      nav_panel("Model Outputs",
-                div(
-                  style = "margin-bottom: 2rem;",
-                  plotOutput("results_plot", height = "600px") %>% withSpinner(color = "#E5E4E2"),
-                  br(),
-                  fluidRow(
-                    column(width = 3, offset = 2, uiOutput("susceptibility_info")),
-                    column(width = 3, offset = 2, uiOutput("case_info"))
-                  )
-                )
-      ),
-      nav_panel("About", uiOutput("ui_overview"))
-    )
-  )
+  # Input controls and wide table layout
+  fluidRow(
+    column(4,
+           fluidRow(
+             column(12, selectInput("country", "Country", selected = "Palestine", choices = countries$name))
+           ),
+           fluidRow(
+             column(12, selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"))
+           ),
+           fluidRow(
+             column(12, uiOutput("pop_input"))
+           ),
+           fluidRow(
+             column(12, uiOutput("r0_input"))
+           ),
+           fluidRow(
+             column(12, sliderInput("years", "Years of simulation", 1, min = 1, max = 5))
+           ),
+           fluidRow(
+             column(12,
+                    div(style = "margin-top: 10px;",
+                        actionButton("run_model", "Run simulations", icon("play"),
+                                     style = "width: 100%; color: #fff; background-color: #ab1940; border-color: #021c35"))
+             )
+           )
+    ),
+    column(8, style = "padding-left: 10px;", DTOutput("input_coverage_table"))
+  ),
   
+  # Nav tabs and plots below
+  div(style = "min-height: 90vh; margin-top: 2rem;", navset_card_underline(
+    nav_panel("Model Setup", plotOutput("model_plot", height = "500px") %>% withSpinner(color = "#E5E4E2")),
+    nav_panel("Model Outputs",
+              fluidRow(
+                column(9,
+                       plotOutput("results_plot", height = "500px") %>% withSpinner(color = "#E5E4E2")
+                ),
+                column(3,
+                       div(style = "padding-left: 1rem; display: flex; flex-direction: column; gap: 1rem;",
+                           uiOutput("susceptibility_info"),
+                           uiOutput("case_info")
+                       )
+                )
+              )
+    ),
+    nav_panel("About", uiOutput("ui_overview"))
+  ))
 )
+
+
 
 
 # Server ------------------------------------------------------------------
@@ -179,7 +159,7 @@ server <- function(input, output, session) {
   last_n <- reactiveVal(3)
   
   current_data <- reactiveVal(
-    data.frame(Year = 0:2, seed = rep(0, 3), 'Vaccination coverage' = rep(0, 3))
+    data.frame(Year = 0:2, seed = rep(0, 3), `Vaccination coverage` = rep(0, 3))
   )
   
   observeEvent(input$years, {
@@ -191,7 +171,7 @@ server <- function(input, output, session) {
       added_rows <- data.frame(
         Year = n_old:(n_new - 1),
         seed = rep(0, n_new - n_old),
-        'Vaccination coverage' = rep(0, n_new - n_old)
+        `Vaccination coverage` = rep(0, n_new - n_old)
       )
       df_new <- rbind(df_old, added_rows)
     } else {
@@ -315,7 +295,8 @@ server <- function(input, output, session) {
     plot_one(country = input$country,
              n = input$popsize,
              disease = input$disease,
-             r0 = input$r0)
+             r0 = input$r0,
+             vertical = T)
     
   })
   
@@ -366,7 +347,7 @@ server <- function(input, output, session) {
   
   plot_results <- reactive({
     req(model_data())  # Wait until model_data is available
-    plot_two(model_data())
+    plot_two(model_data(), vertical = T)
   })
   
   output$susceptibility_info <- renderUI({
@@ -411,7 +392,7 @@ server <- function(input, output, session) {
   height = function() {
     req(input$dimension)
     req(dimension_debounced())
-    0.7 * dimension_debounced()[2]
+    0.95 * dimension_debounced()[2]
   },
   width = function() {
     req(input$dimension)    

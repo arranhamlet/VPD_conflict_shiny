@@ -8,23 +8,6 @@ library(shinycssloaders)
 library(shinyWidgets)
 library(later)
 library(shinydashboard)
-#Load packages
-pacman::p_load(
-  odin2,
-  rio,
-  here,
-  dust2,
-  tidyverse,
-  reshape2,
-  collapse,
-  janitor,
-  ggpubr,
-  patchwork,
-  squire.page,
-  patchwork,
-  data.table,
-  ggthemr
-)
 
 ## Setup and Gather Data ------------
 options(scipen = 999)
@@ -89,7 +72,7 @@ model <- odin2::odin("model/stochastic_model_v1.R")
 
 # Poster Plot 1 on Demographics and susceptibility ---------
 
-plot_one <- function(country, n, disease, r0) {
+plot_one <- function(country, n, disease, r0, vertical = F) {
   iso3c <- countrycode::countrycode(country, "country.name.en", "iso3c")
   dis_match <- c("diphtheria", "measles", "pertussis")[match(disease, c("Diphtheria", "Measles", "Pertussis"))]
   
@@ -221,8 +204,13 @@ plot_one <- function(country, n, disease, r0) {
     scale_y_continuous(expand = c(0, 0)) +
     scale_fill_manual(values = protection_cols)
   
-  
-  total_information <- (vaccination_gg / cases_gg / demographics_gg) | susceptibility_gg
+  if(vertical == T){
+    total_information <- (vaccination_gg + cases_gg + demographics_gg) / (susceptibility_gg +
+                                                                            theme(legend.position = "right")) +
+      guides(fill = guide_legend(ncol = 1))
+  } else {
+    total_information <- (vaccination_gg / cases_gg / demographics_gg) | susceptibility_gg
+  }
   
   return(total_information)
   
@@ -314,7 +302,7 @@ generate_model_data <- function(country, n, disease, r0, user_df){
   
 }
 
-plot_two <- function(combo) {
+plot_two <- function(combo, vertical = F) {
   
   #Calculate susceptibility
   new_cases_go <- combo %>%
@@ -520,7 +508,11 @@ plot_two <- function(combo) {
   p1 <- percent_vaccinated + theme(plot.margin = margin(5, 5, 5, 5, "pt"))
   p2 <- combo_plot + theme(plot.margin = margin(5, 5, 5, 5, "pt"))
   
-  total_outbreaks <- p1 + p2 + plot_layout(widths = c(1, 1.4))
+  if(vertical == F){
+    total_outbreaks <- p1 + p2 + plot_layout(widths = c(1, 1.4))
+  } else {
+    total_outbreaks <- (p1 / p2) 
+  }
   
   return(total_outbreaks)
   
