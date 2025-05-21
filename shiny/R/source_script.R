@@ -73,7 +73,6 @@ diseases_of_interest <- data.frame(
   min_R0 = c(1, 12, 9)
 )
 
-
 #Import functions
 invisible(sapply(list.files(
   "R/functions",
