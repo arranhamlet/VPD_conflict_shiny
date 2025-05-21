@@ -106,13 +106,16 @@ ui <- fluidPage(
              column(12, selectInput("country", "Country", selected = "Palestine", choices = countries$name))
            ),
            fluidRow(
-             column(12, selectInput("pop_input", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"))
+             column(12, uiOutput("pop_input"))
            ),
            fluidRow(
-             column(12, uiOutput("disease"))
+             column(12, selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"))
            ),
            fluidRow(
              column(12, uiOutput("r0_input"))
+           ),
+           fluidRow(
+             column(12, sliderInput("years", "Years of simulation", 1, min = 1, max = 5))
            ),
            fluidRow(
              column(12,
@@ -122,17 +125,14 @@ ui <- fluidPage(
              )
            )
     ),
-    column(8, 
-           fluidRow(
-             column(12, sliderInput("years", "Years of simulation", 1, min = 1, max = 5))
-           ),
-           fluidRow(column(12, style = "padding-left: 10px;", DTOutput("input_coverage_table")))
-  )),
+    column(4, style = "padding-left: 10px;", DTOutput("input_coverage_table"))
+  ),
   
   # Nav tabs and plots below
   div(style = "min-height: 90vh; margin-top: 2rem;", navset_card_underline(
     nav_panel("Model Setup", plotOutput("model_plot", height = "500px") %>% withSpinner(color = "#E5E4E2")),
     nav_panel("Model Outputs",
+              fluidRow(
                 column(9,
                        plotOutput("results_plot", height = "500px") %>% withSpinner(color = "#E5E4E2")
                 ),
@@ -142,6 +142,7 @@ ui <- fluidPage(
                            uiOutput("case_info")
                        )
                 )
+              )
     ),
     nav_panel("About", uiOutput("ui_overview"))
   ))
@@ -396,7 +397,7 @@ server <- function(input, output, session) {
   width = function() {
     req(input$dimension)    
     req(dimension_debounced())
-    0.95 * dimension_debounced()[1]
+    0.7 * dimension_debounced()[1]
   })
   
   # make sure these run in the background in case the user is on the other tab
