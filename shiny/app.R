@@ -28,7 +28,7 @@ jameel_theme <- bs_add_rules(jameel_theme, "
     font-weight: normal;
     font-style: normal;
   }
-
+ 
   @font-face {
     font-family: 'Imperial Sans Display';
     src: url('ImperialSansDisplay-Medium.ttf') format('truetype');
