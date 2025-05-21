@@ -63,7 +63,8 @@ data_available <- t(Reduce(data.frame, strsplit(names(all_Rdata_loaded ), "_")))
 countries <- data.frame(
   name = unique(data_available$country),
   iso = unique(data_available$iso)
-)
+) %>%
+  subset(!is.na(name))
 
 # Diseases of interest
 diseases_of_interest <- data.frame(
@@ -571,7 +572,7 @@ summary_stats <- function(combo){
   diff <- subset(susceptibility_data_all, version %in% c("Reduction in coverage") & status == "Vaccine protected")
   diff_percent <- round((subset(diff, time == min(time)) %>% pull(coverage) - subset(diff, time == max(time)) %>% pull(coverage)) * 100, 1)
   
-  direction <- ifelse(diff_percent >= 0, "increase", "decrease")
+  direction <- ifelse(diff_percent  <= 0, "increase", "decrease")
   
   button_one <- paste0(
     abs(diff_percent), "% ", direction, " in the\npopulation protected by vaccination."
@@ -580,8 +581,8 @@ summary_stats <- function(combo){
   #Calculate susceptibility
   new_cases_go <- combo %>%
     subset(age == "All" & state == "new_case") %>%
-    group_by(time, version) %>%
-    summarise(
+    fgroup_by(time, version) %>%
+    fsummarise(
       value_min = get_95CI(x = value, type = "low"),
       value_max = get_95CI(x = value, type = "high"),
       value = median(value)
@@ -598,11 +599,12 @@ summary_stats <- function(combo){
   status_quo <- subset(new_cases_go, version == "No change")
   direction <- ifelse(reduction$value >= status_quo$value, "increase", "decrease")
   
-  button_two <- gsub("NaN", "0",
-                      paste0(round((1 - reduction$value/status_quo$value) * 100, 1), 
-                             "% (95% CI ", round(reduction$value_min/status_quo$value_min * 100, 1),
-                             "-", round((1 - reduction$value_max/status_quo$value_max) * 100, 1), 
-                             ")\n", direction, " in cases."))
+  value <- round(reduction$value/status_quo$value * 100, 1) - 100
+  value_min <- round(reduction$value_min/status_quo$value_min * 100, 1) - 100
+  value_max <- round(reduction$value_max/status_quo$value_max * 100, 1) - 100
+  values <- sort(c(value, value_min, value_max))
+  
+  button_two <- gsub("NaN|NA", 0, paste0(values[1], "% (95% CI ", values[2], "-", values[3], ") ", direction, " in cases."))
   
   c(button_one,
     button_two)

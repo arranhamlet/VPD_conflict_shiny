@@ -131,23 +131,26 @@ ui <- fluidPage(
   ),
   
   # Nav tabs and plots below
-  div(style = "min-height: 90vh; margin-top: 2rem;", navset_card_underline(
-    nav_panel("Model Setup", plotOutput("model_plot", height = "500px") %>% withSpinner(color = "#E5E4E2")),
-    nav_panel("Model Outputs",
-              fluidRow(
-                column(9,
-                       plotOutput("results_plot", height = "500px") %>% withSpinner(color = "#E5E4E2")
-                ),
-                column(3,
-                       div(style = "padding-left: 1rem; display: flex; flex-direction: column; gap: 1rem;",
-                           uiOutput("susceptibility_info"),
-                           uiOutput("case_info")
-                       )
-                )
-              )
-    ),
-    nav_panel("About", uiOutput("ui_overview"))
-  ))
+  # div(style = "min-height: 90vh; margin-top: 2rem;", 
+  div(style = "margin-top: 2rem;",
+      
+      navset_card_underline(
+        nav_panel("Model Setup", plotOutput("model_plot", height = "500px") %>% withSpinner(color = "#E5E4E2")),
+        nav_panel("Model Outputs",
+                  fluidRow(
+                    column(9,
+                           plotOutput("results_plot", height = "500px") %>% withSpinner(color = "#E5E4E2")
+                    ),
+                    column(3,
+                           div(style = "padding-left: 1rem; display: flex; flex-direction: column; gap: 1rem;",
+                               uiOutput("susceptibility_info"),
+                               uiOutput("case_info")
+                           )
+                    )
+                  )
+        ),
+        nav_panel("About", uiOutput("ui_overview"))
+      ))
 )
 
 
@@ -425,6 +428,8 @@ server <- function(input, output, session) {
   # make sure these run in the background in case the user is on the other tab
   outputOptions(output, "results_plot", suspendWhenHidden = FALSE)
   outputOptions(output, "model_plot", suspendWhenHidden = FALSE, priority = 1)
+  outputOptions(output, "susceptibility_info", suspendWhenHidden = FALSE)
+  outputOptions(output, "case_info", suspendWhenHidden = FALSE)
   
   ## ABOUT -----------------------------------------------------
   
