@@ -103,7 +103,7 @@ plot_one <- function(country, n, disease, r0, vertical = F) {
            population = population / sum(population) * n)
   
   #Prior vaccination coverage
-  if(grepl("Diphtheria|Pertussis", dis_match, ignore.case = T)) vac_disease <- paste0(disease, "|DTPCV1|DTPCV3|DTaP|DT|DTwP", collapse = "")
+  if(grepl("Diphtheria|Pertussis", dis_match, ignore.case = T)) vac_disease <- paste0(disease, "|DTPCV1|DTPCV3|DTaP|DT|DTwP", collapse = "") else vac_disease <- disease
   
   routine_subset <- routine_vaccination_data %>%
     subset(
@@ -224,7 +224,7 @@ plot_one <- function(country, n, disease, r0, vertical = F) {
     scale_fill_manual(values = protection_cols)
   
   if(vertical == T){
-    total_information <- (vaccination_gg + cases_gg + demographics_gg) / (susceptibility_gg +
+    total_information <- (vaccination_gg + cases_gg + demographics_gg + plot_layout(guides = "collect")) / (susceptibility_gg +
                                                                             theme(legend.position = "right")) +
       guides(fill = guide_legend(ncol = 1))
   } else {

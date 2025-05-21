@@ -101,13 +101,22 @@ ui <- fluidPage(
   
   # Input controls and wide table layout
   fluidRow(
-    column(4,
+    column(3,
            fluidRow(
              column(12, selectInput("country", "Country", selected = "Palestine", choices = countries$name))
            ),
            fluidRow(
              column(12, uiOutput("pop_input"))
            ),
+           fluidRow(
+             column(12,
+                    div(style = "margin-top: 10px;",
+                        actionButton("run_model", "Run simulations", icon("play"),
+                                     style = "width: 100%; color: #fff; background-color: #ab1940; border-color: #021c35"))
+             )
+           )
+    ),
+    column(3,
            fluidRow(
              column(12, selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"))
            ),
@@ -117,13 +126,6 @@ ui <- fluidPage(
            fluidRow(
              column(12, sliderInput("years", "Years of simulation", 1, min = 1, max = 5))
            ),
-           fluidRow(
-             column(12,
-                    div(style = "margin-top: 10px;",
-                        actionButton("run_model", "Run simulations", icon("play"),
-                                     style = "width: 100%; color: #fff; background-color: #ab1940; border-color: #021c35"))
-             )
-           )
     ),
     column(6, style = "padding-left: 10px;", DTOutput("input_coverage_table"))
   ),
