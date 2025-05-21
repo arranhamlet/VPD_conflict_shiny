@@ -151,10 +151,19 @@ ui <- fluidPage(
     create_sidebar_panel(),
     navset_card_underline(
       nav_panel("Model Setup", plotOutput("model_plot") %>% withSpinner(color = "#E5E4E2")),
-      nav_panel("Model Outputs", plotOutput("results_plot") %>% withSpinner(color = "#E5E4E2")),
+      nav_panel("Model Outputs",
+                div(
+                  style = "margin-bottom: 2rem;",
+                  plotOutput("results_plot", height = "600px") %>% withSpinner(color = "#E5E4E2"),
+                  br(),
+                  fluidRow(
+                    column(width = 3, offset = 2, uiOutput("susceptibility_info")),
+                    column(width = 3, offset = 2, uiOutput("case_info"))
+                  )
+                )
+      ),
       nav_panel("About", uiOutput("ui_overview"))
-    ),
-    
+    )
   )
   
 )
@@ -349,9 +358,35 @@ server <- function(input, output, session) {
     
   })
   
+  stats <- reactive({
+    req(model_data())
+    summary_stats(model_data())
+  })
+  
   plot_results <- reactive({
     req(model_data())  # Wait until model_data is available
     plot_two(model_data())
+  })
+  
+  output$susceptibility_info <- renderValueBox({
+    req(stats())
+    value_box(
+      value = tags$div(stats()[1], style = "font-weight: bold; font-size: 1.5rem;"),
+      title = "",
+      theme = value_box_theme(
+        bg = "#ab1940",
+        fg = "white"
+      )
+    )
+  })
+  
+  output$case_info <- renderValueBox({
+    req(stats())
+    value_box(
+      value = tags$div(stats()[2], style = "font-weight: bold; font-size: 1.5rem;"),
+      style = "background-color: #e6f0ff; color: #ab1940; border-radius: 12px;",
+      title = ""
+    )
   })
   
   output$results_plot <- renderPlot({
@@ -371,7 +406,7 @@ server <- function(input, output, session) {
   height = function() {
     req(input$dimension)
     req(dimension_debounced())
-    0.9 * dimension_debounced()[2]
+    0.7 * dimension_debounced()[2]
   },
   width = function() {
     req(input$dimension)    

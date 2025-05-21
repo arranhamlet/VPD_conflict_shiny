@@ -7,6 +7,7 @@ library(DT)
 library(shinycssloaders)
 library(shinyWidgets)
 library(later)
+library(shinydashboard)
 #Load packages
 pacman::p_load(
   odin2,
@@ -25,23 +26,6 @@ pacman::p_load(
   ggthemr
 )
 
-# Countries of interest
-countries <- data.frame(
-  name = c("Syria", "Palestine", "Yemen", "Nigeria", "Ethiopia", "Sudan",
-           "Myanmar", "Papa New Guinea", "Afghanistan", "Venezuela", "Haiti", "Guatemala",
-           "Chad", "Democratic Republic of the Congo", "Burkina Faso", "Somalia", "The United Kingdom"),
-  iso = c("SYR", "PSE", "YEM", "NGA", "ETH", "SDN", "MMR", "PNG", "AFG", "VEN", "HTI", "GTM",
-          "TCD", "DRC", "BFA", "SOM", "GBR")
-)
-
-# Diseases of interest
-diseases_of_interest <- data.frame(
-  disease = c("Diphtheria", "Measles", "Pertussis"),
-  default_R0 = c(3, 15, 8), 
-  max_R0 = c(7, 18, 15),
-  min_R0 = c(1, 12, 9)
-)
-
 ## Setup and Gather Data ------------
 options(scipen = 999)
 population_all <- import("data/processed/WPP/age_both.csv")
@@ -53,15 +37,40 @@ starting_immunity <- import("output/model_run/MSF/processed/susceptibility.csv")
 full_disease_df <- import("data/processed/WHO/reported_cases_data.csv")
 
 #Rdata files
-all_Rdata <- list.files("output/model_run/MSF/processed/",
-                        pattern = ".rds",
-                        full.names = T)
-all_Rdata_names <- sapply(strsplit(all_Rdata, "/"), function(e)
-  gsub(".rds", "", last(e)))
-all_Rdata_loaded <- sapply(all_Rdata, function(x)
-  import(x), simplify = FALSE)
-names(all_Rdata_loaded) <- all_Rdata_names
+all_Rdata_loaded <- readRDS("output/model_run/MSF/processed/full_rds.rds")
 
+# Countries of interest
+data_available <- t(Reduce(data.frame, strsplit(names(all_Rdata_loaded ), "_"))) %>%
+  as.data.frame() %>%
+  setnames(
+    c("iso", "disease", "R0")
+  ) %>%
+  mutate(country = countrycode::countrycode(
+    sourcevar = iso,
+    origin = "iso3c",
+    destination = "country.name.en"
+  )) %>%
+  mutate(
+    country = case_when(
+      country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo",
+      country == "Myanmar (Burma)" ~ "Myanmar",
+      country == "Palestinian Territories" ~ "Palestine",
+      TRUE ~ country
+    )
+  )
+
+countries <- data.frame(
+  name = unique(data_available$country),
+  iso = unique(data_available$iso)
+)
+
+# Diseases of interest
+diseases_of_interest <- data.frame(
+  disease = c("Diphtheria", "Measles", "Pertussis"),
+  default_R0 = c(4, 15, 12), 
+  max_R0 = c(7, 18, 15),
+  min_R0 = c(1, 12, 9)
+)
 
 
 #Import functions
@@ -107,6 +116,7 @@ plot_one <- function(country, n, disease, r0) {
   
   #Full starting immunity
   starting_immunity <- starting_immunity %>%
+    subset(iso == iso3c & disease == dis_match & R0 == r0) %>%
     mutate(status = factor(
       status,
       levels = c(
@@ -182,7 +192,6 @@ plot_one <- function(country, n, disease, r0) {
   
   susceptibility_gg <- ggplot(
     data = starting_immunity %>%
-      filter(R0 == r0) %>%
       mutate(
         status = recode(
           status,
@@ -334,8 +343,6 @@ plot_two <- function(combo) {
       value = mean(value),
     )
   
-  print(1)
-  
   # Create Case Plot
   ggthemr::ggthemr("fresh", text_size = 18)
   case_diff <- ggplot(
@@ -419,7 +426,6 @@ plot_two <- function(combo) {
     inset_element(case_diff, 0.625, 0.4, .99, .9)
   
   # Poster Plot 2a on Declines ---------
-  print(2)
   susceptibility_data_all <- subset(combo, state %in% c("S", "E", "I", "R", "Is", "Rc") &
                                       age != "All") %>%
     mutate(
@@ -448,7 +454,7 @@ plot_two <- function(combo) {
       coverage = value / sum(value, na.rm = T),
       coverage = case_when(is.nan(coverage) ~ 0, !is.nan(coverage) ~ coverage)
     )
-  print(3)
+  
   #Plot
   vac_protect_all <- susceptibility_data_all %>%
     mutate(status_simple = case_when(
@@ -561,9 +567,9 @@ summary_stats <- function(combo){
     subset(age == "All" & state == "new_case") %>%
     group_by(time, version) %>%
     summarise(
-      value = median(value),
       value_min = get_95CI(x = value, type = "low"),
-      value_max = get_95CI(x = value, type = "high")
+      value_max = get_95CI(x = value, type = "high"),
+      value = median(value)
     ) %>%
     mutate(value_min = pmax(value_min, 0)) %>%
     group_by(version) %>%
