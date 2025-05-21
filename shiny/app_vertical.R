@@ -280,14 +280,23 @@ server <- function(input, output, session) {
   dimension_debounced <- debounce(reactive(input$dimension), 2000)
   
   # Calculate your scaling factor
-  plot_scale <- reactive({
-    req(input$dimension)
+  # plot_scale <- reactive({
+  #   req(input$dimension)
+  #   req(dimension_debounced())
+  #   width <- dimension_debounced()[1]
+  #   ideal_width <- 1500
+  #   scale <- min(max(width / ideal_width, 0.6), 1.2)
+  #   return(scale)
+  # })
+  
+  plot_scale <- eventReactive(input$run_model, {
     req(dimension_debounced())
     width <- dimension_debounced()[1]
     ideal_width <- 1500
     scale <- min(max(width / ideal_width, 0.6), 1.2)
     return(scale)
   })
+  
   
   ## PLOT 1 -----------------------------------------------------
   # Observe the button click to trigger the plot generation
@@ -342,18 +351,18 @@ server <- function(input, output, session) {
     
   })
   
-  stats <- reactive({
+  stats <- eventReactive(input$run_model, {
     req(model_data())
     summary_stats(model_data())
   })
   
-  plot_results <- reactive({
-    req(model_data())  # Wait until model_data is available
-    plot_two(model_data(), vertical = T)
+  plot_results <- eventReactive(input$run_model, {
+    req(model_data())
+    plot_two(model_data(), vertical = TRUE)
   })
   
-  output$susceptibility_info <- renderUI({
-    req(stats())
+  susceptibility_box <- eventReactive(input$run_model, {
+    req(stats())  # only triggered after button press
     value_box(
       value = tags$div(stats()[1], style = "font-weight: bold; font-size: 1.5rem;"),
       title = "",
@@ -364,7 +373,13 @@ server <- function(input, output, session) {
     )
   })
   
-  output$case_info <- renderUI({
+  # renderUI now just outputs that eventReactive
+  output$susceptibility_info <- renderUI({
+    susceptibility_box()
+  })
+  
+  # Wrap this in eventReactive so it only runs after clicking the button
+  case_box <- eventReactive(input$run_model, {
     req(stats())
     value_box(
       value = tags$div(stats()[2], style = "font-weight: bold; font-size: 1.5rem;"),
@@ -374,6 +389,11 @@ server <- function(input, output, session) {
       ),
       title = ""
     )
+  })
+  
+  # Output just renders the result of the reactive expression
+  output$case_info <- renderUI({
+    case_box()
   })
   
   

@@ -540,7 +540,7 @@ plot_two <- function(combo, vertical = F) {
 summary_stats <- function(combo){
   
   susceptibility_data_all <- subset(combo, 
-                                    time %in% c(1, max(time)) & 
+                                    # time %in% c(1, max(time)) & 
                                       state %in% c("S", "E", "I", "R", "Is", "Rc") &
                                       age != "All") %>%
     mutate(
@@ -569,7 +569,7 @@ summary_stats <- function(combo){
     )
   
   diff <- subset(susceptibility_data_all, version %in% c("Reduction in coverage") & status == "Vaccine protected")
-  diff_percent <- round(subset(diff, time == min(time)) %>% pull(coverage) - subset(diff, time == max(time)) %>% pull(coverage) * 100, 1)
+  diff_percent <- round((subset(diff, time == min(time)) %>% pull(coverage) - subset(diff, time == max(time)) %>% pull(coverage)) * 100, 1)
   
   direction <- ifelse(diff_percent >= 0, "increase", "decrease")
   
@@ -599,9 +599,9 @@ summary_stats <- function(combo){
   direction <- ifelse(reduction$value >= status_quo$value, "increase", "decrease")
   
   button_two <- gsub("NaN", "0",
-                      paste0(round(reduction$value/status_quo$value * 100, 1), 
+                      paste0(round((1 - reduction$value/status_quo$value) * 100, 1), 
                              "% (95% CI ", round(reduction$value_min/status_quo$value_min * 100, 1),
-                             "-", round(reduction$value_max/status_quo$value_max * 100, 1), 
+                             "-", round((1 - reduction$value_max/status_quo$value_max) * 100, 1), 
                              ")\n", direction, " in cases."))
   
   c(button_one,
