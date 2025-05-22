@@ -431,7 +431,7 @@ plot_two <- function(combo, vertical = F) {
     )
   
   combo_plot <- outbreak_plot +
-    inset_element(case_diff, 0.625, 0.4, .99, .9)
+    inset_element(case_diff, 0.05, 0.4, .415, .9)
   
   # Poster Plot 2a on Declines ---------
   susceptibility_data_all <- subset(combo, state %in% c("S", "E", "I", "R", "Is", "Rc") &
@@ -600,11 +600,14 @@ summary_stats <- function(combo){
   direction <- ifelse(reduction$value >= status_quo$value, "increase", "decrease")
   
   value <- round(reduction$value/status_quo$value * 100, 1) - 100
+  print(value)
   value_min <- round(reduction$value_min/status_quo$value_min * 100, 1) - 100
+  print(value_min)
   value_max <- round(reduction$value_max/status_quo$value_max * 100, 1) - 100
+  print(value_max)
   values <- sort(c(value, value_min, value_max))
   
-  button_two <- gsub("NaN|NA", 0, paste0(values[1], "% (95% CI ", values[2], "-", values[3], ") ", direction, " in cases."))
+  button_two <- gsub("NaN|NA", 0, paste0(values[2], "% (95% CI ", values[1], "-", values[3], ") ", direction, " in cases."))
   
   c(button_one,
     button_two)

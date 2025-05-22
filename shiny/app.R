@@ -50,7 +50,7 @@ create_sidebar_panel <- function() {
     selectInput("disease", "Disease of interest", choices = diseases_of_interest$disease, selected = "Measles"),
     uiOutput("r0_input"),
     
-    sliderInput("years", "Years of simulation", 1, min = 1, max = 5),
+    sliderInput("years", "Years of simulation", 3, min = 1, max = 5),
     
     h4("Future events"),
     div(
@@ -84,6 +84,9 @@ ui <- fluidPage(
       }
       .dataTables_wrapper {
         width: 100% !important;
+      }
+      .value-box-title {
+        display: none !important;
       }
       .dataTables_scrollBody {
         max-height: 200px !important;
@@ -157,9 +160,10 @@ ui <- fluidPage(
                   style = "margin-bottom: 2rem;",
                   plotOutput("results_plot", height = "600px") %>% withSpinner(color = "#E5E4E2"),
                   br(),
+                  br(),
                   fluidRow(
-                    column(width = 3, offset = 2, uiOutput("susceptibility_info")),
-                    column(width = 3, offset = 2, uiOutput("case_info"))
+                    column(width = 3, offset = 1, uiOutput("susceptibility_info")),
+                    column(width = 3, offset = 3, uiOutput("case_info"))
                   )
                 )
       ),
@@ -422,7 +426,10 @@ server <- function(input, output, session) {
   # make sure these run in the background in case the user is on the other tab
   outputOptions(output, "results_plot", suspendWhenHidden = FALSE)
   outputOptions(output, "model_plot", suspendWhenHidden = FALSE, priority = 1)
+  outputOptions(output, "case_info", suspendWhenHidden = FALSE, priority = 1)
+  outputOptions(output, "susceptibility_info", suspendWhenHidden = FALSE, priority = 1)
   
+  ## ABOUT -----------------------------------------------------
   ## ABOUT -----------------------------------------------------
   
   # Fetch markdown about
