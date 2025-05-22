@@ -434,7 +434,7 @@ server <- function(input, output, session) {
   
   # Fetch markdown about
   output$ui_overview <- renderUI({
-    includeMarkdown("www/about.md")
+    HTML(includeMarkdown("www/about.md"))
   })
   
 }

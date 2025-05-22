@@ -13,7 +13,6 @@ The tool generates time-dependent outbreak probabilities and estimated case burd
 * Simulate how vaccination disruptions increase susceptibility over time
 * Quantify outbreak risks under varying vaccination coverage scenarios
 * Assess outbreak severity and the impact of delayed or proactive vaccination campaigns
-
 By enabling users to explore different intervention scenarios, JICVP supports rapid decision-making to mitigate the public health impacts of immunization disruptions.
 
 ## **The Underlying Model**
@@ -71,7 +70,7 @@ JICVP is developed by the Jameel Institute at Imperial College London, with cont
 
 This project is supported by [Community Jameel](https://www.communityjameel.org/) as part of the Jameel Institute – Realtime Intelligent Support for Emergencies (JI-RISE) initiative
 
-![Community Jameel](www/jameel_community_logo.png)
+<img src="jameel_community_logo.png" alt="Community Jameel" width="300"/>
 
 # **Disclaimer and Licensing**
 
